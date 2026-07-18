@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../controllers/game_controller.dart';
 import '../models/game_settings.dart';
+import '../theme/app_theme.dart';
 
 class SettingsView extends StatefulWidget {
   const SettingsView({super.key});
@@ -37,16 +38,16 @@ class _SettingsViewState extends State<SettingsView> {
   @override
   void initState() {
     super.initState();
-    _loadSavedGames();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadSavedGames());
   }
 
-  void _loadSavedGames() {
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final controller = Provider.of<GameController>(context, listen: false);
-      final files = await controller.getSavedGames();
-      setState(() {
-        _savedFiles = files;
-      });
+  Future<void> _loadSavedGames() async {
+    if (!mounted) return;
+    final controller = Provider.of<GameController>(context, listen: false);
+    final files = await controller.getSavedGames();
+    if (!mounted) return;
+    setState(() {
+      _savedFiles = files;
     });
   }
 
@@ -59,7 +60,9 @@ class _SettingsViewState extends State<SettingsView> {
     // Initialize controllers with current names and colors
     for (var key in settings.teamNames.keys) {
       if (!_nameControllers.containsKey(key)) {
-        _nameControllers[key] = TextEditingController(text: settings.teamNames[key]);
+        _nameControllers[key] = TextEditingController(
+          text: settings.teamNames[key],
+        );
       }
       if (!_selectedColors.containsKey(key)) {
         _selectedColors[key] = settings.teamColors[key] ?? Colors.grey;
@@ -84,7 +87,7 @@ class _SettingsViewState extends State<SettingsView> {
     final isNarrow = screenWidth < 900;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: AppColors.ink,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -100,10 +103,7 @@ class _SettingsViewState extends State<SettingsView> {
             ),
             Text(
               'تعديل أسماء الفرق والألوان، حفظ وتحميل ملفات اللعبة، وإعادة التعيين',
-              style: GoogleFonts.cairo(
-                color: const Color(0xFF64748B),
-                fontSize: 14,
-              ),
+              style: GoogleFonts.cairo(color: AppColors.quiet, fontSize: 14),
             ),
             const SizedBox(height: 30),
 
@@ -115,9 +115,9 @@ class _SettingsViewState extends State<SettingsView> {
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1E293B),
+                      color: AppColors.surface,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFF334155)),
+                      border: Border.all(color: AppColors.border),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,13 +131,18 @@ class _SettingsViewState extends State<SettingsView> {
                           ),
                         ),
                         const SizedBox(height: 20),
-                        ..._nameControllers.keys.map((key) => _buildTeamEditor(key)),
+                        ..._nameControllers.keys.map(
+                          (key) => _buildTeamEditor(key),
+                        ),
                         const SizedBox(height: 20),
                         ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF10B981), // Emerald 500
+                            backgroundColor: AppColors.green, // Emerald 500
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 16,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -148,7 +153,10 @@ class _SettingsViewState extends State<SettingsView> {
                           icon: const Icon(Icons.check_circle_rounded),
                           label: Text(
                             'حفظ وتطبيق التغييرات الجديدة',
-                            style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 13),
+                            style: GoogleFonts.cairo(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
                           ),
                         ),
                       ],
@@ -170,9 +178,9 @@ class _SettingsViewState extends State<SettingsView> {
                     child: Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1E293B),
+                        color: AppColors.surface,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFF334155)),
+                        border: Border.all(color: AppColors.border),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -186,13 +194,18 @@ class _SettingsViewState extends State<SettingsView> {
                             ),
                           ),
                           const SizedBox(height: 20),
-                          ..._nameControllers.keys.map((key) => _buildTeamEditor(key)),
+                          ..._nameControllers.keys.map(
+                            (key) => _buildTeamEditor(key),
+                          ),
                           const SizedBox(height: 20),
                           ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF10B981), // Emerald 500
+                              backgroundColor: AppColors.green, // Emerald 500
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 16,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
@@ -203,7 +216,10 @@ class _SettingsViewState extends State<SettingsView> {
                             icon: const Icon(Icons.check_circle_rounded),
                             label: Text(
                               'حفظ وتطبيق التغييرات الجديدة',
-                              style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 13),
+                              style: GoogleFonts.cairo(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
                             ),
                           ),
                         ],
@@ -213,10 +229,7 @@ class _SettingsViewState extends State<SettingsView> {
                   const SizedBox(width: 20),
 
                   // Left Section: Save/Load & Actions
-                  Expanded(
-                    flex: 2,
-                    child: _buildActionsColumn(controller),
-                  ),
+                  Expanded(flex: 2, child: _buildActionsColumn(controller)),
                 ],
               ),
           ],
@@ -232,16 +245,20 @@ class _SettingsViewState extends State<SettingsView> {
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: const Color(0xFF1E293B),
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFF334155)),
+            border: Border.all(color: AppColors.border),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'حفظ حالة اللعبة الحالية',
-                style: GoogleFonts.cairo(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                style: GoogleFonts.cairo(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
@@ -249,7 +266,10 @@ class _SettingsViewState extends State<SettingsView> {
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   labelText: 'اسم ملف الحفظ (مثال: الجولة الأولى)',
-                  labelStyle: GoogleFonts.cairo(color: const Color(0xFF64748B), fontSize: 12),
+                  labelStyle: GoogleFonts.cairo(
+                    color: AppColors.quiet,
+                    fontSize: 12,
+                  ),
                   enabledBorder: OutlineInputBorder(
                     borderSide: const BorderSide(color: Color(0xFF334155)),
                     borderRadius: BorderRadius.circular(10),
@@ -259,31 +279,60 @@ class _SettingsViewState extends State<SettingsView> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   filled: true,
-                  fillColor: const Color(0xFF0F172A),
+                  fillColor: AppColors.ink,
                 ),
               ),
               const SizedBox(height: 16),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF3B82F6),
+                  backgroundColor: AppColors.teal,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
                 onPressed: () async {
+                  final messenger = ScaffoldMessenger.of(context);
                   final name = _saveNameController.text.trim();
                   if (name.isNotEmpty) {
-                    await controller.saveToFile(name);
+                    try {
+                      await controller.saveToFile(name);
+                    } catch (error) {
+                      if (!mounted || !messenger.mounted) return;
+                      messenger.showSnackBar(
+                        SnackBar(
+                          backgroundColor: AppColors.coral,
+                          content: Text(
+                            error.toString().replaceFirst(
+                              'Unsupported operation: ',
+                              '',
+                            ),
+                            style: GoogleFonts.cairo(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      );
+                      return;
+                    }
+                    if (!mounted) return;
                     _saveNameController.clear();
-                    _loadSavedGames();
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    await _loadSavedGames();
+                    if (!mounted || !messenger.mounted) return;
+                    messenger.showSnackBar(
                       SnackBar(
-                        backgroundColor: const Color(0xFF10B981),
+                        backgroundColor: AppColors.green,
                         content: Directionality(
                           textDirection: TextDirection.rtl,
                           child: Text(
                             'تم حفظ اللعبة بنجاح!',
-                            style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+                            style: GoogleFonts.cairo(
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
@@ -291,7 +340,10 @@ class _SettingsViewState extends State<SettingsView> {
                   }
                 },
                 icon: const Icon(Icons.save_rounded, size: 18),
-                label: Text('حفظ اللعبة', style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
+                label: Text(
+                  'حفظ اللعبة',
+                  style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
@@ -303,16 +355,20 @@ class _SettingsViewState extends State<SettingsView> {
           height: 280,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: const Color(0xFF1E293B),
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFF334155)),
+            border: Border.all(color: AppColors.border),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'الألعاب المحفوظة سابقًا',
-                style: GoogleFonts.cairo(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                style: GoogleFonts.cairo(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
               ),
               const SizedBox(height: 10),
               Expanded(
@@ -320,22 +376,31 @@ class _SettingsViewState extends State<SettingsView> {
                     ? Center(
                         child: Text(
                           'لا توجد ألعاب محفوظة حاليًا',
-                          style: GoogleFonts.cairo(color: const Color(0xFF64748B), fontSize: 12),
+                          style: GoogleFonts.cairo(
+                            color: AppColors.quiet,
+                            fontSize: 12,
+                          ),
                         ),
                       )
                     : ListView.builder(
                         itemCount: _savedFiles.length,
                         itemBuilder: (context, index) {
                           final file = _savedFiles[index];
-                          final filename = file.path.split('/').last.replaceAll('.json', '');
+                          final filename = file.path
+                              .split('/')
+                              .last
+                              .replaceAll('.json', '');
 
                           return Container(
                             margin: const EdgeInsets.only(bottom: 8),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF0F172A),
+                              color: AppColors.ink,
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: const Color(0xFF334155)),
+                              border: Border.all(color: AppColors.border),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -343,21 +408,36 @@ class _SettingsViewState extends State<SettingsView> {
                                 Expanded(
                                   child: Text(
                                     filename,
-                                    style: GoogleFonts.cairo(color: Colors.white, fontSize: 12),
+                                    style: GoogleFonts.cairo(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                    ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                                 Row(
                                   children: [
                                     IconButton(
-                                      icon: const Icon(Icons.file_open_rounded, color: Colors.green, size: 20),
+                                      icon: const Icon(
+                                        Icons.file_open_rounded,
+                                        color: Colors.green,
+                                        size: 20,
+                                      ),
                                       tooltip: 'تحميل اللعبة',
                                       onPressed: () {
-                                        _confirmLoadGame(context, controller, file);
+                                        _confirmLoadGame(
+                                          context,
+                                          controller,
+                                          file,
+                                        );
                                       },
                                     ),
                                     IconButton(
-                                      icon: const Icon(Icons.delete_rounded, color: Colors.red, size: 20),
+                                      icon: const Icon(
+                                        Icons.delete_rounded,
+                                        color: Colors.red,
+                                        size: 20,
+                                      ),
                                       tooltip: 'حذف ملف الحفظ',
                                       onPressed: () async {
                                         await file.delete();
@@ -381,35 +461,47 @@ class _SettingsViewState extends State<SettingsView> {
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: const Color(0xFF1E293B),
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFEF4444).withOpacity(0.3)),
+            border: Border.all(color: AppColors.coral.withValues(alpha: 0.3)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'منطقة خطر (إعادة الضبط)',
-                style: GoogleFonts.cairo(color: const Color(0xFFEF4444), fontWeight: FontWeight.bold, fontSize: 14),
+                style: GoogleFonts.cairo(
+                  color: AppColors.coral,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
                 'سيؤدي هذا الخيار إلى مسح جميع النقاط وإخلاء جميع خلايا الأراضي والبدء بلعبة جديدة تمامًا.',
-                style: GoogleFonts.cairo(color: const Color(0xFF94A3B8), fontSize: 11),
+                style: GoogleFonts.cairo(color: AppColors.muted, fontSize: 11),
               ),
               const SizedBox(height: 16),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFEF4444),
+                  backgroundColor: AppColors.coral,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
                 onPressed: () {
                   _confirmResetGame(context, controller);
                 },
                 icon: const Icon(Icons.refresh_rounded, size: 18),
-                label: Text('إعادة ضبط اللعبة كاملة', style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
+                label: Text(
+                  'إعادة ضبط اللعبة كاملة',
+                  style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
@@ -431,7 +523,11 @@ class _SettingsViewState extends State<SettingsView> {
             children: [
               Text(
                 'فريق ${teamKey.replaceAll('team', '')}:',
-                style: GoogleFonts.cairo(color: const Color(0xFF94A3B8), fontSize: 13, fontWeight: FontWeight.bold),
+                style: GoogleFonts.cairo(
+                  color: AppColors.muted,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -439,7 +535,10 @@ class _SettingsViewState extends State<SettingsView> {
                   controller: _nameControllers[teamKey],
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     enabledBorder: OutlineInputBorder(
                       borderSide: const BorderSide(color: Color(0xFF334155)),
                       borderRadius: BorderRadius.circular(10),
@@ -449,7 +548,7 @@ class _SettingsViewState extends State<SettingsView> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     filled: true,
-                    fillColor: const Color(0xFF0F172A),
+                    fillColor: AppColors.ink,
                   ),
                 ),
               ),
@@ -463,7 +562,7 @@ class _SettingsViewState extends State<SettingsView> {
               spacing: 6,
               runSpacing: 6,
               children: _colorPresets.map((color) {
-                final isSelected = currentColor.value == color.value;
+                final isSelected = currentColor.toARGB32() == color.toARGB32();
                 return InkWell(
                   onTap: () {
                     setState(() {
@@ -482,7 +581,13 @@ class _SettingsViewState extends State<SettingsView> {
                         width: 2.5,
                       ),
                       boxShadow: isSelected
-                          ? [BoxShadow(color: color.withOpacity(0.6), blurRadius: 4, spreadRadius: 1)]
+                          ? [
+                              BoxShadow(
+                                color: color.withValues(alpha: 0.6),
+                                blurRadius: 4,
+                                spreadRadius: 1,
+                              ),
+                            ]
                           : null,
                     ),
                   ),
@@ -496,7 +601,56 @@ class _SettingsViewState extends State<SettingsView> {
     );
   }
 
-  void _applySettings(GameController controller) {
+  Future<void> _applySettings(GameController controller) async {
+    final hasProgress =
+        controller.roundNumber > 1 ||
+        controller.board.any((cell) => cell.ownerTeamId != null) ||
+        controller.teams.any((team) => team.score != 0);
+    if (hasProgress) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => Directionality(
+          textDirection: TextDirection.rtl,
+          child: AlertDialog(
+            backgroundColor: AppColors.surface,
+            title: Text(
+              'تطبيق الإعدادات؟',
+              style: GoogleFonts.cairo(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            content: Text(
+              'تغيير أسماء الفرق أو ألوانها سيبدأ جلسة جديدة ويمسح تقدم اللعبة الحالية.',
+              style: GoogleFonts.cairo(color: AppColors.muted, fontSize: 13),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: Text(
+                  'إلغاء',
+                  style: GoogleFonts.cairo(color: AppColors.muted),
+                ),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.coral,
+                ),
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: Text(
+                  'بدء جلسة جديدة',
+                  style: GoogleFonts.cairo(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      if (confirmed != true || !mounted) return;
+    }
     final Map<String, String> names = {};
     final Map<String, Color> colors = {};
 
@@ -504,7 +658,8 @@ class _SettingsViewState extends State<SettingsView> {
       names[key] = _nameControllers[key]!.text.trim().isNotEmpty
           ? _nameControllers[key]!.text.trim()
           : controller.settings.teamNames[key]!;
-      colors[key] = _selectedColors[key] ?? controller.settings.teamColors[key]!;
+      colors[key] =
+          _selectedColors[key] ?? controller.settings.teamColors[key]!;
     }
 
     controller.updateSettings(
@@ -518,7 +673,7 @@ class _SettingsViewState extends State<SettingsView> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        backgroundColor: const Color(0xFF10B981),
+        backgroundColor: AppColors.green,
         content: Directionality(
           textDirection: TextDirection.rtl,
           child: Text(
@@ -530,7 +685,11 @@ class _SettingsViewState extends State<SettingsView> {
     );
   }
 
-  void _confirmLoadGame(BuildContext context, GameController controller, File file) {
+  void _confirmLoadGame(
+    BuildContext context,
+    GameController controller,
+    File file,
+  ) {
     final filename = file.path.split('/').last.replaceAll('.json', '');
     showDialog(
       context: context,
@@ -538,25 +697,37 @@ class _SettingsViewState extends State<SettingsView> {
         return Directionality(
           textDirection: TextDirection.rtl,
           child: AlertDialog(
-            backgroundColor: const Color(0xFF1E293B),
-            title: Text('تحميل اللعبة المحفوظة', style: GoogleFonts.cairo(color: Colors.white, fontWeight: FontWeight.bold)),
+            backgroundColor: AppColors.surface,
+            title: Text(
+              'تحميل اللعبة المحفوظة',
+              style: GoogleFonts.cairo(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             content: Text(
               'هل تريد بالتأكيد تحميل ملف الحفظ "$filename"؟ سيتم فقدان تقدم اللعبة الحالية غير المحفوظ.',
-              style: GoogleFonts.cairo(color: const Color(0xFF94A3B8)),
+              style: GoogleFonts.cairo(color: AppColors.muted),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: Text('إلغاء', style: GoogleFonts.cairo(color: const Color(0xFF94A3B8))),
+                child: Text(
+                  'إلغاء',
+                  style: GoogleFonts.cairo(color: AppColors.muted),
+                ),
               ),
               ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.green,
+                ),
                 onPressed: () async {
                   await controller.loadFromFile(file);
+                  if (!context.mounted) return;
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      backgroundColor: const Color(0xFF10B981),
+                      backgroundColor: AppColors.green,
                       content: Directionality(
                         textDirection: TextDirection.rtl,
                         child: Text(
@@ -567,7 +738,13 @@ class _SettingsViewState extends State<SettingsView> {
                     ),
                   );
                 },
-                child: Text('تحميل الآن', style: GoogleFonts.cairo(color: Colors.white, fontWeight: FontWeight.bold)),
+                child: Text(
+                  'تحميل الآن',
+                  style: GoogleFonts.cairo(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           ),
@@ -583,25 +760,36 @@ class _SettingsViewState extends State<SettingsView> {
         return Directionality(
           textDirection: TextDirection.rtl,
           child: AlertDialog(
-            backgroundColor: const Color(0xFF1E293B),
-            title: Text('إعادة ضبط اللعبة', style: GoogleFonts.cairo(color: const Color(0xFFEF4444), fontWeight: FontWeight.bold)),
+            backgroundColor: AppColors.surface,
+            title: Text(
+              'إعادة ضبط اللعبة',
+              style: GoogleFonts.cairo(
+                color: AppColors.coral,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             content: Text(
               'هل تريد بالتأكيد إخلاء اللوحة بالكامل وتصفير نقاط جميع الفرق للبدء من الصفر؟ لا يمكن التراجع عن هذا الإجراء.',
-              style: GoogleFonts.cairo(color: const Color(0xFF94A3B8)),
+              style: GoogleFonts.cairo(color: AppColors.muted),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: Text('إلغاء', style: GoogleFonts.cairo(color: const Color(0xFF94A3B8))),
+                child: Text(
+                  'إلغاء',
+                  style: GoogleFonts.cairo(color: AppColors.muted),
+                ),
               ),
               ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.coral,
+                ),
                 onPressed: () {
                   controller.initializeGame();
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      backgroundColor: const Color(0xFFEF4444),
+                      backgroundColor: AppColors.coral,
                       content: Directionality(
                         textDirection: TextDirection.rtl,
                         child: Text(
@@ -612,7 +800,13 @@ class _SettingsViewState extends State<SettingsView> {
                     ),
                   );
                 },
-                child: Text('نعم، إعادة ضبط', style: GoogleFonts.cairo(color: Colors.white, fontWeight: FontWeight.bold)),
+                child: Text(
+                  'نعم، إعادة ضبط',
+                  style: GoogleFonts.cairo(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           ),

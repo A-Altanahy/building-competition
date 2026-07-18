@@ -1,3 +1,6 @@
+// The legacy browser bridge is isolated behind the conditional platform export.
+// It remains compatible with the oldest Flutter web target used by the event.
+// ignore_for_file: deprecated_member_use, avoid_web_libraries_in_flutter
 import 'dart:html' as html;
 import 'dart:js' as js;
 import '../controllers/game_controller.dart';
@@ -13,11 +16,11 @@ void openSpectatorWindow(String stateJson) {
   final pathname = html.window.location.pathname;
   final fullUrl = '$origin$pathname#/spectator';
   _spectatorWindow = html.window.open(fullUrl, 'Spectator Screen');
-  
+
   // Write to localStorage as fallback
   try {
     html.window.localStorage['game_state'] = stateJson;
-  } catch (e) {
+  } catch (_) {
     // Ignore sandbox errors
   }
 
@@ -44,7 +47,7 @@ void initWebSync(GameController controller) {
 
     // Notify the opener that we are ready to receive state
     html.window.opener?.postMessage('ready', '*');
-    
+
     // Fallback: Read initial state from localStorage if available
     try {
       final initialState = html.window.localStorage['game_state'];
@@ -54,7 +57,7 @@ void initWebSync(GameController controller) {
     } catch (e) {
       // Ignore
     }
-  } 
+  }
   // 2. Moderator Window (Control Sync)
   else {
     // Listen for "ready" message from spectator window and reply with current state
@@ -67,7 +70,7 @@ void initWebSync(GameController controller) {
     // Listen to changes and sync them
     controller.addListener(() {
       final stateJson = controller.exportGameStateJson();
-      
+
       // Direct message sync
       _spectatorWindow?.postMessage(stateJson, '*');
 
@@ -118,9 +121,9 @@ void toggleWebFullScreen() {
           else if (element.msRequestFullscreen) element.msRequestFullscreen();
         }
       })()
-      '''
+      ''',
     ]);
   } catch (e) {
-    print('Fullscreen error: $e');
+    // Keep this bridge silent in production; fullscreen is optional.
   }
 }

@@ -53,10 +53,22 @@ void main() {
       // Surrounding cells of 5:
       // Row 1: col 4 (index 4), col 6 (index 6)
       // Row 2: col 4 (index 14), col 5 (index 15), col 6 (index 16)
-      controller.setCellBuilding(4, BuildingType.house);   // should be 350 (base 200)
-      controller.setCellBuilding(6, BuildingType.hotel);   // should be 600 (base 450)
-      controller.setCellBuilding(14, BuildingType.grocery); // should be 200 (base 350)
-      controller.setCellBuilding(16, BuildingType.market);  // should be 250 (base 400)
+      controller.setCellBuilding(
+        4,
+        BuildingType.house,
+      ); // should be 350 (base 200)
+      controller.setCellBuilding(
+        6,
+        BuildingType.hotel,
+      ); // should be 600 (base 450)
+      controller.setCellBuilding(
+        14,
+        BuildingType.grocery,
+      ); // should be 200 (base 350)
+      controller.setCellBuilding(
+        16,
+        BuildingType.market,
+      ); // should be 250 (base 400)
 
       expect(controller.calculateCellValue(4), equals(350));
       expect(controller.calculateCellValue(6), equals(600));
@@ -72,10 +84,22 @@ void main() {
       // Row 1: col 4 (index 4), col 5 (index 5), col 6 (index 6)
       // Row 2: col 4 (index 14), col 6 (index 16)
       // Row 3: col 4 (index 24), col 5 (index 25), col 6 (index 26)
-      controller.setCellBuilding(5, BuildingType.house);    // should be 50 (base 200)
-      controller.setCellBuilding(6, BuildingType.hotel);    // should be 300 (base 450)
-      controller.setCellBuilding(14, BuildingType.grocery);  // should be 500 (base 350)
-      controller.setCellBuilding(16, BuildingType.market);   // should be 550 (base 400)
+      controller.setCellBuilding(
+        5,
+        BuildingType.house,
+      ); // should be 50 (base 200)
+      controller.setCellBuilding(
+        6,
+        BuildingType.hotel,
+      ); // should be 300 (base 450)
+      controller.setCellBuilding(
+        14,
+        BuildingType.grocery,
+      ); // should be 500 (base 350)
+      controller.setCellBuilding(
+        16,
+        BuildingType.market,
+      ); // should be 550 (base 400)
 
       expect(controller.calculateCellValue(5), equals(50));
       expect(controller.calculateCellValue(6), equals(300));
@@ -83,19 +107,22 @@ void main() {
       expect(controller.calculateCellValue(16), equals(550));
     });
 
-    test('Overlapping Complex and Factory cancels modifiers (restores base)', () {
-      // Cell 5: Complex (row 1, col 5)
-      // Cell 15: Factory (row 2, col 5)
-      controller.setCellBuilding(5, BuildingType.complex);
-      controller.setCellBuilding(15, BuildingType.factory);
+    test(
+      'Overlapping Complex and Factory cancels modifiers (restores base)',
+      () {
+        // Cell 5: Complex (row 1, col 5)
+        // Cell 15: Factory (row 2, col 5)
+        controller.setCellBuilding(5, BuildingType.complex);
+        controller.setCellBuilding(15, BuildingType.factory);
 
-      // Cell 6 (row 1, col 6) is surrounding to BOTH 5 and 15
-      controller.setCellBuilding(6, BuildingType.house);    // base 200
-      controller.setCellBuilding(16, BuildingType.grocery);  // base 350
+        // Cell 6 (row 1, col 6) is surrounding to BOTH 5 and 15
+        controller.setCellBuilding(6, BuildingType.house); // base 200
+        controller.setCellBuilding(16, BuildingType.grocery); // base 350
 
-      expect(controller.calculateCellValue(6), equals(200));
-      expect(controller.calculateCellValue(16), equals(350));
-    });
+        expect(controller.calculateCellValue(6), equals(200));
+        expect(controller.calculateCellValue(16), equals(350));
+      },
+    );
 
     test('Gameplay loop: endRound calculations and build cost deductions', () {
       // Round 1:
@@ -136,6 +163,42 @@ void main() {
       controller.undo();
       expect(controller.roundNumber, equals(2));
       expect(controller.teams[0].score, equals(100));
+    });
+
+    test('Removing an owner clears the building and its influence', () {
+      controller.setCellOwner(15, 'team1');
+      controller.setCellBuilding(15, BuildingType.factory);
+      controller.setCellOwner(5, 'team2');
+      controller.setCellBuilding(5, BuildingType.house);
+
+      expect(controller.calculateCellValue(5), equals(50));
+
+      controller.setCellOwner(15, null);
+
+      expect(controller.board[14].buildingType, equals(BuildingType.house));
+      expect(controller.calculateCellValue(5), equals(200));
+    });
+
+    test('A custom value override can be cleared', () {
+      controller.setCellOwner(1, 'team1');
+      controller.setCellBuilding(1, BuildingType.house);
+      controller.setCellOverrideValue(1, 999);
+      expect(controller.calculateCellValue(1), equals(999));
+
+      controller.setCellOverrideValue(1, null);
+      expect(controller.calculateCellValue(1), equals(200));
+    });
+
+    test('The competition stops after six rounds', () {
+      for (var i = 0; i < GameController.maxRounds; i++) {
+        controller.endRound();
+      }
+
+      expect(controller.isGameOver, isTrue);
+      expect(controller.roundNumber, equals(7));
+
+      controller.endRound();
+      expect(controller.roundNumber, equals(7));
     });
   });
 }

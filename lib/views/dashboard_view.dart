@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter/foundation.dart';
 import '../controllers/game_controller.dart';
 import '../models/building.dart';
 import '../models/team.dart';
-import '../models/board_cell.dart';
-import 'stats_view.dart';
+import '../theme/app_theme.dart';
+import '../utils/platform_utils.dart';
+import '../widgets/competition_board.dart';
 import 'settings_view.dart';
 import 'spectator_view.dart';
-import '../utils/platform_utils.dart';
+import 'stats_view.dart';
 
 class DashboardView extends StatefulWidget {
   const DashboardView({super.key});
@@ -19,188 +18,162 @@ class DashboardView extends StatefulWidget {
 }
 
 class _DashboardViewState extends State<DashboardView> {
-  int _activeTab = 0; // 0: Game, 1: Stats, 2: Settings, 3: Dual Screen
-  int? _selectedCellIndex; // 1-indexed
+  int _activeTab = 0;
+  int? _selectedCellIndex;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A), // Slate 900
-      body: Row(
-        textDirection: TextDirection.rtl, // Navigation bar on the right
-        children: [
-          // Navigation Sidebar (Arabic RTL sidebar)
-          _buildSidebar(),
-
-          // Main Content Area
-          Expanded(
-            child: Directionality(
-              textDirection: TextDirection.rtl,
-              child: _buildMainContent(),
-            ),
-          ),
-        ],
+      backgroundColor: AppColors.canvas,
+      body: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Row(
+          children: [
+            _buildSidebar(),
+            Expanded(child: _buildMainContent()),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildSidebar() {
-    return Container(
-      width: 250,
+    final compact = MediaQuery.sizeOf(context).width < 1120;
+    final items = [
+      (0, 'لوحة المدينة', Icons.grid_view_rounded),
+      (1, 'الإحصاءات والترتيب', Icons.insights_rounded),
+      (2, 'إعدادات اللعبة', Icons.tune_rounded),
+      (3, 'الشاشة المزدوجة', Icons.present_to_all_rounded),
+    ];
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      width: compact ? 82 : 220,
       decoration: const BoxDecoration(
-        color: Color(0xFF1E293B), // Slate 800
-        border: Border(
-          left: BorderSide(color: Color(0xFF334155), width: 1), // Slate 700
-        ),
+        color: AppColors.surface,
+        border: Border(left: BorderSide(color: AppColors.border)),
       ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: constraints.maxHeight,
+      child: Column(
+        children: [
+          const SizedBox(height: 22),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: compact ? 11 : 16),
+            child: Container(
+              height: compact ? 54 : 78,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [AppColors.teal, AppColors.cyan],
+                  begin: Alignment.topRight,
+                  end: Alignment.bottomLeft,
+                ),
+                borderRadius: BorderRadius.circular(18),
               ),
-              child: IntrinsicHeight(
-                child: Column(
-                  children: [
-                    const SizedBox(height: 30),
-                    // App Title / Logo
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFEF4444), Color(0xFF3B82F6)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
+              child: compact
+                  ? const Center(
+                      child: Icon(
+                        Icons.apartment_rounded,
+                        color: AppColors.ink,
+                        size: 28,
                       ),
-                      margin: const EdgeInsets.symmetric(horizontal: 16),
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Row(
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 13),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.apartment_rounded,
+                            color: AppColors.ink,
+                            size: 28,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'دوري فتية الرشد',
+                              style: appTextStyle(
+                                size: 16,
+                                weight: FontWeight.w900,
+                                color: AppColors.ink,
+                              ),
+                              maxLines: 2,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+            ),
+          ),
+          if (!compact) ...[
+            const SizedBox(height: 10),
+            Text(
+              'المسابقة الثقافية العقارية',
+              style: appTextStyle(size: 11, color: AppColors.muted),
+            ),
+          ],
+          const SizedBox(height: 30),
+          ...items.map(
+            (item) => _SidebarItem(
+              title: item.$2,
+              icon: item.$3,
+              compact: compact,
+              active: _activeTab == item.$1,
+              onTap: () => setState(() => _activeTab = item.$1),
+            ),
+          ),
+          const Spacer(),
+          Padding(
+            padding: EdgeInsets.all(compact ? 11 : 14),
+            child: Tooltip(
+              message: 'فتح شاشة الجمهور',
+              child: InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: () {
+                  final controller = context.read<GameController>();
+                  openSpectatorWindow(controller.exportGameStateJson());
+                },
+                child: Container(
+                  height: compact ? 48 : 50,
+                  decoration: BoxDecoration(
+                    color: AppColors.gold.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: AppColors.gold.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  child: compact
+                      ? const Center(
+                          child: Icon(Icons.tv_rounded, color: AppColors.gold),
+                        )
+                      : Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.dashboard_rounded, color: Colors.white),
-                            const SizedBox(width: 10),
+                            const Icon(
+                              Icons.tv_rounded,
+                              color: AppColors.gold,
+                              size: 19,
+                            ),
+                            const SizedBox(width: 8),
                             Text(
-                              'دوري فتية الرشد',
-                              style: GoogleFonts.cairo(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
+                              'شاشة الجمهور',
+                              style: appTextStyle(
+                                size: 12,
+                                weight: FontWeight.w800,
+                                color: AppColors.gold,
                               ),
                             ),
                           ],
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'المسابقة الثقافية العقارية',
-                      style: GoogleFonts.cairo(
-                        color: const Color(0xFF94A3B8), // Slate 400
-                        fontSize: 12,
-                      ),
-                    ),
-                    const SizedBox(height: 40),
-
-                    // Sidebar Menu Items
-                    _buildSidebarItem(0, 'لوحة التحكم', Icons.grid_view_rounded),
-                    _buildSidebarItem(1, 'الإحصائيات والترتيب', Icons.bar_chart_rounded),
-                    _buildSidebarItem(2, 'إعدادات اللعبة', Icons.settings_rounded),
-                    _buildSidebarItem(3, 'الشاشة المزدوجة', Icons.splitscreen_rounded),
-
-                    const Spacer(),
-
-                    // Spectator View Trigger Button
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF3B82F6), // Blue 500
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          elevation: 4,
-                        ),
-                        onPressed: () {
-                          final controller = Provider.of<GameController>(context, listen: false);
-                          openSpectatorWindow(controller.exportGameStateJson());
-                        },
-                        icon: const Icon(Icons.tv_rounded, size: 20),
-                        label: Text(
-                          'شاشة العرض (الجمهور)',
-                          style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 13),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
                 ),
               ),
             ),
-          );
-        }
-      ),
-    );
-  }
-
-  Widget _buildSidebarItem(int index, String title, IconData icon) {
-    final isActive = _activeTab == index;
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      child: InkWell(
-        onTap: () {
-          setState(() {
-            _activeTab = index;
-          });
-        },
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: isActive ? const Color(0xFF334155) : Colors.transparent, // Active Slate 700
-            borderRadius: BorderRadius.circular(10),
-            border: isActive
-                ? const Border(
-                    right: BorderSide(color: Color(0xFFEF4444), width: 4), // Red Indicator
-                  )
-                : null,
           ),
-          child: Row(
-            textDirection: TextDirection.rtl,
-            children: [
-              Icon(
-                icon,
-                color: isActive ? const Color(0xFF3B82F6) : const Color(0xFF94A3B8),
-                size: 22,
-              ),
-              const SizedBox(width: 15),
-              Expanded(
-                child: Text(
-                  title,
-                  style: GoogleFonts.cairo(
-                    color: isActive ? Colors.white : const Color(0xFF94A3B8),
-                    fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                    fontSize: 14,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-        ),
+          const SizedBox(height: 8),
+        ],
       ),
     );
   }
 
   Widget _buildMainContent() {
     switch (_activeTab) {
-      case 0:
-        return _buildGamePanel(isDualScreen: false);
       case 1:
         return const StatsView();
       case 2:
@@ -208,656 +181,253 @@ class _DashboardViewState extends State<DashboardView> {
       case 3:
         return _buildDualScreenPanel();
       default:
-        return _buildGamePanel(isDualScreen: false);
+        return _buildGamePanel();
     }
   }
 
   Widget _buildDualScreenPanel() {
     return Row(
-      textDirection: TextDirection.rtl,
       children: [
-        // Left Pane: Audience Spectator Screen (55% width)
-        const Expanded(
-          flex: 11,
-          child: SpectatorBody(showBackButton: false),
-        ),
-        
-        // Split border divider
-        const VerticalDivider(
-          width: 4,
-          thickness: 4,
-          color: Color(0xFF334155),
-        ),
-        
-        // Right Pane: Moderator Control Grid & Inspector (45% width)
-        Expanded(
-          flex: 9,
-          child: _buildGamePanel(isDualScreen: true),
-        ),
+        const Expanded(flex: 11, child: SpectatorBody(showBackButton: false)),
+        const VerticalDivider(width: 4, thickness: 4, color: AppColors.border),
+        Expanded(flex: 9, child: _buildGamePanel(isDualScreen: true)),
       ],
     );
   }
 
   Widget _buildGamePanel({bool isDualScreen = false}) {
+    final compact = MediaQuery.sizeOf(context).width < 1000;
     return Column(
       children: [
-        // Top Action Bar (Round Counter, Undo, Redo, End Round)
         _buildTopActionBar(),
-
-        // Main Board Split View (Scoreboard left, Grid center, Cell Inspector right)
         Expanded(
-          child: Row(
-            textDirection: TextDirection.rtl, // Scoreboard right-ish, Grid center, Inspector left
-            children: [
-              // Left Section: Scoreboard & Points Adjustment
-              if (!isDualScreen)
-                Container(
-                  width: 320,
-                  color: const Color(0xFF0F172A),
-                  padding: const EdgeInsets.all(16.0),
-                  child: const ScoreboardWidget(),
-                ),
-
-              // Center Section: 10x10 Grid View
-              Expanded(
-                child: Container(
-                  padding: EdgeInsets.all(isDualScreen ? 10.0 : 20.0),
-                  child: Column(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              compact ? 10 : 18,
+              14,
+              compact ? 10 : 18,
+              16,
+            ),
+            child: compact
+                ? Column(
                     children: [
-                      Expanded(
-                        child: BoardGridWidget(
-                          selectedIndex: _selectedCellIndex,
-                          onCellSelected: (index) {
-                            setState(() {
-                              _selectedCellIndex = index;
-                            });
-                          },
+                      if (!isDualScreen)
+                        const SizedBox(height: 104, child: ScoreboardStrip()),
+                      const SizedBox(height: 12),
+                      Expanded(child: _buildBoardPanel()),
+                      if (_selectedCellIndex != null) ...[
+                        const SizedBox(height: 12),
+                        SizedBox(height: 280, child: _buildInspectorPanel()),
+                      ],
+                    ],
+                  )
+                : Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (!isDualScreen) ...[
+                        const SizedBox(width: 270, child: ScoreboardPanel()),
+                        const SizedBox(width: 14),
+                      ],
+                      Expanded(child: _buildBoardPanel()),
+                      if (_selectedCellIndex != null) ...[
+                        const SizedBox(width: 14),
+                        SizedBox(
+                          width: isDualScreen ? 270 : 315,
+                          child: _buildInspectorPanel(),
                         ),
-                      ),
+                      ],
                     ],
                   ),
-                ),
-              ),
-
-              // Right Section: Cell Inspector
-              Container(
-                width: isDualScreen ? 270 : 320,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF1E293B),
-                  border: Border(
-                    right: BorderSide(color: Color(0xFF334155), width: 1),
-                  ),
-                ),
-                padding: const EdgeInsets.all(12.0),
-                child: CellInspectorWidget(
-                  selectedIndex: _selectedCellIndex,
-                  onClosed: () {
-                    setState(() {
-                      _selectedCellIndex = null;
-                    });
-                  },
-                ),
-              ),
-            ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildBoardPanel() {
+    return Container(
+      decoration: panelDecoration(color: AppColors.ink),
+      padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.teal.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.map_rounded,
+                  color: AppColors.teal,
+                  size: 21,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'خريطة المدينة',
+                    style: appTextStyle(size: 17, weight: FontWeight.w900),
+                  ),
+                  Text(
+                    'اختر مربعاً لمراجعة الملكية والمبنى',
+                    style: appTextStyle(size: 11, color: AppColors.muted),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              _LegendChip(color: AppColors.gold, label: 'تأثير مصنع'),
+              const SizedBox(width: 7),
+              _LegendChip(color: AppColors.cyan, label: 'تأثير مجمع'),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Expanded(
+            child: CompetitionBoard(
+              selectedIndex: _selectedCellIndex,
+              onCellSelected: (index) =>
+                  setState(() => _selectedCellIndex = index),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInspectorPanel() {
+    return Container(
+      decoration: panelDecoration(color: AppColors.surface),
+      padding: const EdgeInsets.all(16),
+      child: CellInspectorPanel(
+        selectedIndex: _selectedCellIndex,
+        onClosed: () => setState(() => _selectedCellIndex = null),
+      ),
     );
   }
 
   Widget _buildTopActionBar() {
-    final controller = Provider.of<GameController>(context);
-    return Container(
-      height: 80,
-      color: const Color(0xFF1E293B),
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        child: SizedBox(
-          width: MediaQuery.of(context).size.width - 250, // Sidebar offset
+    return Consumer<GameController>(
+      builder: (context, controller, _) {
+        final progress = controller.isGameOver
+            ? 1.0
+            : controller.roundNumber / GameController.maxRounds;
+        return Container(
+          height: 88,
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          decoration: const BoxDecoration(
+            color: AppColors.surface,
+            border: Border(bottom: BorderSide(color: AppColors.border)),
+          ),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Round info
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0F172A),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFF334155)),
-                    ),
-                    child: Text(
-                      'الجولة: ${controller.roundNumber}',
-                      style: GoogleFonts.cairo(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              // Undo/Redo/Fullscreen Buttons
-              Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.undo_rounded),
-                    color: controller.canUndo ? Colors.white : Colors.grey,
-                    tooltip: 'تراجع عن الجولة',
-                    onPressed: controller.canUndo ? () => controller.undo() : null,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.redo_rounded),
-                    color: controller.canRedo ? Colors.white : Colors.grey,
-                    tooltip: 'إعادة التطبيق',
-                    onPressed: controller.canRedo ? () => controller.redo() : null,
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    icon: const Icon(Icons.fullscreen_rounded),
-                    color: Colors.white,
-                    tooltip: 'شاشة كاملة',
-                    onPressed: () {
-                      toggleWebFullScreen();
-                    },
-                  ),
-                ],
-              ),
-
-              // End Round Button
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFEF4444), // Red 500
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  elevation: 4,
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 9,
                 ),
-                onPressed: () {
-                  _showEndRoundConfirmation(context, controller);
-                },
-                icon: const Icon(Icons.arrow_forward_rounded),
-                label: Text(
-                  'إنهاء الجولة وحساب النقاط',
-                  style: GoogleFonts.cairo(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showEndRoundConfirmation(BuildContext context, GameController controller) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            backgroundColor: const Color(0xFF1E293B),
-            title: Text(
-              'تأكيد إنهاء الجولة',
-              style: GoogleFonts.cairo(color: Colors.white, fontWeight: FontWeight.bold),
-            ),
-            content: Text(
-              'هل أنت متأكد من إنهاء الجولة الحالية؟ سيتم تحديث رصيد النقاط لجميع الفرق وتطبيق خصومات البناء على المباني الجديدة.',
-              style: GoogleFonts.cairo(color: const Color(0xFF94A3B8)),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(
-                  'إلغاء',
-                  style: GoogleFonts.cairo(color: const Color(0xFF94A3B8)),
-                ),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
-                onPressed: () {
-                  controller.endRound();
-                  Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      backgroundColor: const Color(0xFF10B981),
-                      content: Directionality(
-                        textDirection: TextDirection.rtl,
-                        child: Text(
-                          'تم إنهاء الجولة بنجاح وحساب النقاط!',
-                          style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-                child: Text(
-                  'نعم، إنهاء الجولة',
-                  style: GoogleFonts.cairo(color: Colors.white, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-// ==========================================
-// BoardGridWidget: 10x10 grid of cells
-// ==========================================
-class BoardGridWidget extends StatelessWidget {
-  final int? selectedIndex;
-  final Function(int) onCellSelected;
-
-  const BoardGridWidget({
-    super.key,
-    required this.selectedIndex,
-    required this.onCellSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final controller = Provider.of<GameController>(context);
-    final cells = controller.board;
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final gridSpacing = 6.0;
-        final cols = 10;
-        final rows = 10;
-
-        final availableWidth = constraints.maxWidth;
-        final availableHeight = constraints.maxHeight;
-
-        // Calculate cell size that keeps cells square and fits bounds
-        final cellWidth = (availableWidth - (cols - 1) * gridSpacing) / cols;
-        final cellHeight = (availableHeight - (rows - 1) * gridSpacing) / rows;
-
-        final cellSize = cellWidth < cellHeight ? cellWidth : cellHeight;
-
-        final gridWidth = cellSize * cols + (cols - 1) * gridSpacing;
-        final gridHeight = cellSize * rows + (rows - 1) * gridSpacing;
-
-        return Center(
-          child: SizedBox(
-            width: gridWidth,
-            height: gridHeight,
-            child: GridView.builder(
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: cols,
-                crossAxisSpacing: gridSpacing,
-                mainAxisSpacing: gridSpacing,
-              ),
-              itemCount: cells.length,
-              itemBuilder: (context, index) {
-                final cellIndex = index + 1;
-                final cell = cells[index];
-                final isSelected = selectedIndex == cellIndex;
-                final cellValue = controller.calculateCellValue(cellIndex);
-
-                // Find owner team
-                Team? ownerTeam;
-                if (cell.ownerTeamId != null) {
-                  ownerTeam = controller.teams.firstWhere((t) => t.id == cell.ownerTeamId);
-                }
-
-                return CellWidget(
-                  cell: cell,
-                  value: cellValue,
-                  ownerTeam: ownerTeam,
-                  isSelected: isSelected,
-                  onTap: () => onCellSelected(cellIndex),
-                  cellSize: cellSize,
-                );
-              },
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-// ==========================================
-// CellWidget: Individual Grid Tile
-// ==========================================
-class CellWidget extends StatelessWidget {
-  final BoardCell cell;
-  final int value;
-  final Team? ownerTeam;
-  final bool isSelected;
-  final VoidCallback onTap;
-  final double cellSize;
-
-  const CellWidget({
-    super.key,
-    required this.cell,
-    required this.value,
-    required this.ownerTeam,
-    required this.isSelected,
-    required this.onTap,
-    required this.cellSize,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final themeColor = ownerTeam?.color ?? const Color(0xFF334155); // Slate 700 if neutral
-    final isNeutral = ownerTeam == null;
-
-    IconData getBuildingIcon(BuildingType type) {
-      switch (type) {
-        case BuildingType.house:
-          return Icons.home_rounded;
-        case BuildingType.grocery:
-          return Icons.local_grocery_store_rounded;
-        case BuildingType.market:
-          return Icons.storefront_rounded;
-        case BuildingType.hotel:
-          return Icons.hotel_rounded;
-        case BuildingType.factory:
-          return Icons.precision_manufacturing_rounded;
-        case BuildingType.complex:
-          return Icons.domain_rounded;
-      }
-    }
-
-    return Tooltip(
-      message: 'الخلية ${cell.index}\n${ownerTeam?.name ?? 'بدون مالك'}\n${cell.buildingType.arabicName}: $value نقطة',
-      textStyle: GoogleFonts.cairo(color: Colors.white, fontSize: 11),
-      decoration: BoxDecoration(color: const Color(0xFF0F172A), borderRadius: BorderRadius.circular(6)),
-      child: Material(
-        color: isSelected ? Colors.white.withOpacity(0.15) : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(8),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            decoration: BoxDecoration(
-              color: isNeutral
-                  ? const Color(0xFF1E293B).withOpacity(0.6)
-                  : themeColor.withOpacity(0.25),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: isSelected
-                    ? Colors.white
-                    : (isNeutral ? const Color(0xFF334155) : themeColor),
-                width: isSelected ? 2.5 : 1,
-              ),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: (ownerTeam?.color ?? Colors.white).withOpacity(0.5),
-                        blurRadius: 8,
-                        spreadRadius: 1,
-                      )
-                    ]
-                  : null,
-            ),
-            child: LayoutBuilder(
-              builder: (context, cellConstraints) {
-                final cellHeight = cellConstraints.maxHeight;
-
-                return Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Cell index
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        '${cell.index}',
-                        style: GoogleFonts.cairo(
-                          color: isNeutral ? const Color(0xFF64748B) : Colors.white70,
-                          fontSize: cellHeight * 0.20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: cellHeight * 0.04),
-                    // Building Icon
-                    Icon(
-                      getBuildingIcon(cell.buildingType),
-                      color: isNeutral ? const Color(0xFF475569) : themeColor,
-                      size: cellHeight * 0.35,
-                    ),
-                    SizedBox(height: cellHeight * 0.04),
-                    // Calculated points
-                    if (!isNeutral)
-                      Flexible(
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            '$value',
-                            style: GoogleFonts.cairo(
-                              color: Colors.white,
-                              fontSize: cellHeight * 0.18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                );
-              }
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ==========================================
-// ScoreboardWidget: Score List and Controls
-// ==========================================
-class ScoreboardWidget extends StatelessWidget {
-  const ScoreboardWidget({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final controller = Provider.of<GameController>(context);
-    final sortedTeams = List<Team>.from(controller.teams)
-      ..sort((a, b) => b.score.compareTo(a.score));
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'لائحة النقاط والترتيب',
-          style: GoogleFonts.cairo(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
-        ),
-        const SizedBox(height: 20),
-
-        // Team list
-        Expanded(
-          child: ListView.builder(
-            itemCount: sortedTeams.length,
-            itemBuilder: (context, index) {
-              final team = sortedTeams[index];
-              final isLeader = index == 0 && team.score > 0;
-
-              return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B),
-                  borderRadius: BorderRadius.circular(12),
+                  color: controller.isGameOver
+                      ? AppColors.gold.withValues(alpha: 0.16)
+                      : AppColors.teal.withValues(alpha: 0.13),
+                  borderRadius: BorderRadius.circular(13),
                   border: Border.all(
-                    color: isLeader ? const Color(0xFFF59E0B) : const Color(0xFF334155),
-                    width: isLeader ? 1.5 : 1,
+                    color: controller.isGameOver
+                        ? AppColors.gold
+                        : AppColors.teal,
                   ),
                 ),
                 child: Row(
                   children: [
-                    // Rank Badge
-                    CircleAvatar(
-                      radius: 14,
-                      backgroundColor: isLeader ? const Color(0xFFF59E0B) : const Color(0xFF475569),
-                      child: Text(
-                        '${index + 1}',
-                        style: GoogleFonts.cairo(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
+                    Icon(
+                      controller.isGameOver
+                          ? Icons.emoji_events_rounded
+                          : Icons.flag_rounded,
+                      color: controller.isGameOver
+                          ? AppColors.gold
+                          : AppColors.teal,
+                      size: 19,
                     ),
-                    const SizedBox(width: 12),
-
-                    // Team Name & Color Dot
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                width: 10,
-                                height: 10,
-                                decoration: BoxDecoration(
-                                  color: team.color,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  team.name,
-                                  style: GoogleFonts.cairo(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Score Display & Adjustments button
-                    Row(
-                      children: [
-                        Text(
-                          '${team.score}',
-                          style: GoogleFonts.cairo(
-                            color: isLeader ? const Color(0xFFF59E0B) : Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        IconButton(
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          icon: const Icon(Icons.edit_note_rounded, color: Color(0xFF94A3B8), size: 20),
-                          tooltip: 'تعديل النقاط يدويًا',
-                          onPressed: () => _showPointsAdjustmentDialog(context, controller, team),
-                        ),
-                      ],
+                    const SizedBox(width: 8),
+                    Text(
+                      controller.isGameOver
+                          ? 'اكتملت المسابقة'
+                          : 'الجولة ${controller.roundNumber} من ${GameController.maxRounds}',
+                      style: appTextStyle(size: 13, weight: FontWeight.w900),
                     ),
                   ],
                 ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _showPointsAdjustmentDialog(BuildContext context, GameController controller, Team team) {
-    final TextEditingController amountController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            backgroundColor: const Color(0xFF1E293B),
-            title: Text(
-              'تعديل نقاط: ${team.name}',
-              style: GoogleFonts.cairo(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'النقاط الحالية: ${team.score}',
-                  style: GoogleFonts.cairo(color: const Color(0xFF94A3B8), fontSize: 14),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: amountController,
-                  keyboardType: TextInputType.number,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    labelText: 'قيمة النقاط (موجب للإضافة، سالب للخصم)',
-                    labelStyle: GoogleFonts.cairo(color: const Color(0xFF64748B), fontSize: 12),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Color(0xFF334155)),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Color(0xFF3B82F6)),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    filled: true,
-                    fillColor: const Color(0xFF0F172A),
+              ),
+              const SizedBox(width: 12),
+              SizedBox(
+                width: 110,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: LinearProgressIndicator(
+                    minHeight: 7,
+                    value: progress,
+                    backgroundColor: AppColors.border,
+                    color: controller.isGameOver
+                        ? AppColors.gold
+                        : AppColors.teal,
                   ),
                 ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(
-                  'إلغاء',
-                  style: GoogleFonts.cairo(color: const Color(0xFF94A3B8)),
-                ),
               ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981)),
-                onPressed: () {
-                  final val = int.tryParse(amountController.text);
-                  if (val != null) {
-                    controller.adjustScore(team.id, val);
-                    Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        backgroundColor: const Color(0xFF10B981),
-                        content: Directionality(
-                          textDirection: TextDirection.rtl,
-                          child: Text(
-                            'تم تعديل نقاط فريق ${team.name} بمقدار $val',
-                            style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                    );
-                  }
-                },
-                child: Text(
-                  'حفظ التعديل',
-                  style: GoogleFonts.cairo(color: Colors.white, fontWeight: FontWeight.bold),
+              const SizedBox(width: 14),
+              _InfoPill(
+                icon: Icons.construction_rounded,
+                label: controller.isGameOver
+                    ? 'لا يوجد بناء'
+                    : 'بناء ${controller.buildAllowance}',
+              ),
+              const SizedBox(width: 8),
+              _InfoPill(
+                icon: Icons.location_city_rounded,
+                label:
+                    '${controller.board.where((c) => c.ownerTeamId != null).length} مبنى',
+              ),
+              const Spacer(),
+              IconButton(
+                onPressed: controller.canUndo ? controller.undo : null,
+                tooltip: 'تراجع',
+                icon: const Icon(Icons.undo_rounded),
+                color: controller.canUndo ? AppColors.text : AppColors.quiet,
+              ),
+              IconButton(
+                onPressed: controller.canRedo ? controller.redo : null,
+                tooltip: 'إعادة',
+                icon: const Icon(Icons.redo_rounded),
+                color: controller.canRedo ? AppColors.text : AppColors.quiet,
+              ),
+              IconButton(
+                onPressed: toggleWebFullScreen,
+                tooltip: 'شاشة كاملة',
+                icon: const Icon(Icons.fullscreen_rounded),
+                color: AppColors.text,
+              ),
+              const SizedBox(width: 10),
+              FilledButton.icon(
+                onPressed: controller.isGameOver
+                    ? null
+                    : () => _showEndRoundConfirmation(context, controller),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.coral,
+                  foregroundColor: AppColors.text,
+                  disabledBackgroundColor: AppColors.border,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 17,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                label: Text(
+                  controller.isGameOver ? 'انتهت اللعبة' : 'إنهاء الجولة',
+                  style: appTextStyle(size: 12, weight: FontWeight.w900),
                 ),
               ),
             ],
@@ -866,16 +436,432 @@ class ScoreboardWidget extends StatelessWidget {
       },
     );
   }
+
+  Future<void> _showEndRoundConfirmation(
+    BuildContext context,
+    GameController controller,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: Text(
+            'تسوية الجولة ${controller.roundNumber}',
+            style: appTextStyle(size: 18, weight: FontWeight.w900),
+          ),
+          content: Text(
+            'سيتم احتساب عوائد جميع المباني وخصم تكاليف المباني الجديدة. بعد الجولة السادسة ستظهر النتيجة النهائية.',
+            style: appTextStyle(size: 13, color: AppColors.muted),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(
+                'مراجعة',
+                style: appTextStyle(color: AppColors.muted),
+              ),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: AppColors.coral),
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: Text(
+                'احتساب الآن',
+                style: appTextStyle(size: 12, weight: FontWeight.w900),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (confirmed == true && context.mounted) {
+      controller.endRound();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.green,
+          behavior: SnackBarBehavior.floating,
+          content: Text(
+            'تم احتساب عوائد الجولة ${controller.roundNumber - 1}',
+            style: appTextStyle(
+              size: 12,
+              weight: FontWeight.w800,
+              color: AppColors.ink,
+            ),
+          ),
+        ),
+      );
+    }
+  }
 }
 
-// ==========================================
-// CellInspectorWidget: Inspector Side Panel
-// ==========================================
-class CellInspectorWidget extends StatelessWidget {
+class _SidebarItem extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final bool compact;
+  final bool active;
+  final VoidCallback onTap;
+
+  const _SidebarItem({
+    required this.title,
+    required this.icon,
+    required this.compact,
+    required this.active,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: compact ? 11 : 12, vertical: 3),
+      child: Tooltip(
+        message: title,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            height: 52,
+            decoration: BoxDecoration(
+              color: active
+                  ? AppColors.teal.withValues(alpha: 0.14)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(14),
+              border: active
+                  ? Border.all(color: AppColors.teal.withValues(alpha: 0.55))
+                  : null,
+            ),
+            child: compact
+                ? Center(
+                    child: Icon(
+                      icon,
+                      color: active ? AppColors.teal : AppColors.muted,
+                      size: 23,
+                    ),
+                  )
+                : Row(
+                    children: [
+                      const SizedBox(width: 14),
+                      Icon(
+                        icon,
+                        color: active ? AppColors.teal : AppColors.muted,
+                        size: 21,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: appTextStyle(
+                            size: 13,
+                            weight: active ? FontWeight.w900 : FontWeight.w600,
+                            color: active ? AppColors.text : AppColors.muted,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  const _InfoPill({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.ink,
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 15, color: AppColors.gold),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: appTextStyle(
+              size: 11,
+              weight: FontWeight.w800,
+              color: AppColors.muted,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LegendChip extends StatelessWidget {
+  final Color color;
+  final String label;
+  const _LegendChip({required this.color, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.11),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: appTextStyle(size: 9, weight: FontWeight.w700, color: color),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ScoreboardPanel extends StatelessWidget {
+  const ScoreboardPanel({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = context.watch<GameController>();
+    final teams = [...controller.teams]
+      ..sort((a, b) => b.score.compareTo(a.score));
+    return Container(
+      decoration: panelDecoration(),
+      padding: const EdgeInsets.fromLTRB(14, 15, 14, 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.emoji_events_rounded,
+                color: AppColors.gold,
+                size: 21,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'الترتيب الحالي',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: appTextStyle(size: 16, weight: FontWeight.w900),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'النقاط • عدد المباني • العائد القادم',
+            style: appTextStyle(size: 10, color: AppColors.muted),
+          ),
+          const SizedBox(height: 15),
+          Expanded(
+            child: ListView.separated(
+              itemCount: teams.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 9),
+              itemBuilder: (context, index) =>
+                  _TeamScoreCard(team: teams[index], rank: index + 1),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ScoreboardStrip extends StatelessWidget {
+  const ScoreboardStrip({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = context.watch<GameController>();
+    final teams = [...controller.teams]
+      ..sort((a, b) => b.score.compareTo(a.score));
+    return ListView.separated(
+      scrollDirection: Axis.horizontal,
+      itemCount: teams.length,
+      separatorBuilder: (_, _) => const SizedBox(width: 8),
+      itemBuilder: (context, index) => SizedBox(
+        width: 205,
+        child: _TeamScoreCard(
+          team: teams[index],
+          rank: index + 1,
+          compact: true,
+        ),
+      ),
+    );
+  }
+}
+
+class _TeamScoreCard extends StatelessWidget {
+  final Team team;
+  final int rank;
+  final bool compact;
+  const _TeamScoreCard({
+    required this.team,
+    required this.rank,
+    this.compact = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = context.read<GameController>();
+    return Container(
+      padding: EdgeInsets.all(compact ? 10 : 11),
+      decoration: BoxDecoration(
+        color: AppColors.ink,
+        borderRadius: BorderRadius.circular(13),
+        border: Border.all(
+          color: rank == 1
+              ? AppColors.gold.withValues(alpha: 0.8)
+              : AppColors.border,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: compact ? 25 : 28,
+            height: compact ? 25 : 28,
+            decoration: BoxDecoration(
+              color: rank == 1 ? AppColors.gold : AppColors.border,
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                '$rank',
+                style: appTextStyle(
+                  size: 11,
+                  weight: FontWeight.w900,
+                  color: AppColors.ink,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 9),
+          Container(
+            width: 5,
+            height: 38,
+            decoration: BoxDecoration(
+              color: team.color,
+              borderRadius: BorderRadius.circular(5),
+            ),
+          ),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  team.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: appTextStyle(
+                    size: compact ? 11 : 12,
+                    weight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${controller.ownedCellCount(team.id)} مبنى  •  +${controller.calculateTeamIncome(team.id)} / ج',
+                  style: appTextStyle(size: 9, color: AppColors.muted),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            '${team.score}',
+            style: appTextStyle(
+              size: compact ? 15 : 17,
+              weight: FontWeight.w900,
+              color: rank == 1 ? AppColors.gold : AppColors.text,
+            ),
+          ),
+          if (!compact)
+            IconButton(
+              tooltip: 'تعديل النقاط',
+              onPressed: () => _showScoreAdjustment(context, controller, team),
+              icon: const Icon(
+                Icons.edit_note_rounded,
+                size: 19,
+                color: AppColors.muted,
+              ),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 26),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _showScoreAdjustment(
+    BuildContext context,
+    GameController controller,
+    Team team,
+  ) {
+    final amount = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (dialogContext) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: Text(
+            'تعديل نقاط ${team.name}',
+            style: appTextStyle(size: 17, weight: FontWeight.w900),
+          ),
+          content: TextField(
+            controller: amount,
+            keyboardType: TextInputType.number,
+            style: appTextStyle(),
+            decoration: InputDecoration(
+              labelText: 'موجب للإضافة، سالب للخصم',
+              labelStyle: appTextStyle(size: 12, color: AppColors.muted),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text('إلغاء', style: appTextStyle(color: AppColors.muted)),
+            ),
+            FilledButton(
+              onPressed: () {
+                final value = int.tryParse(amount.text);
+                if (value != null) controller.adjustScore(team.id, value);
+                Navigator.pop(dialogContext);
+              },
+              child: Text(
+                'حفظ',
+                style: appTextStyle(
+                  size: 12,
+                  weight: FontWeight.w900,
+                  color: AppColors.ink,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class CellInspectorPanel extends StatelessWidget {
   final int? selectedIndex;
   final VoidCallback onClosed;
-
-  const CellInspectorWidget({
+  const CellInspectorPanel({
     super.key,
     required this.selectedIndex,
     required this.onClosed,
@@ -883,225 +869,332 @@ class CellInspectorWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (selectedIndex == null) {
-      return Center(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.grid_goldenratio_rounded, color: Color(0xFF475569), size: 48),
-              const SizedBox(height: 16),
-              Text(
-                'اختر خلية من الخريطة لعرض تفاصيلها وتعديلها',
-                style: GoogleFonts.cairo(color: const Color(0xFF64748B), fontSize: 13),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    final cellIndex = selectedIndex!;
-    final controller = Provider.of<GameController>(context);
-    final cell = controller.board[cellIndex - 1];
-    final calculatedValue = controller.calculateCellValue(cellIndex);
-
-    // Context details
-    final surrounding = controller.getSurroundingIndices(cellIndex);
-    final complexNeighbors = surrounding
-        .where((idx) => controller.board[idx - 1].buildingType == BuildingType.complex)
-        .toList();
-    final factoryNeighbors = surrounding
-        .where((idx) => controller.board[idx - 1].buildingType == BuildingType.factory)
-        .toList();
+    if (selectedIndex == null) return _emptyState();
+    final controller = context.watch<GameController>();
+    final cell = controller.board[selectedIndex! - 1];
+    final owner = cell.ownerTeamId == null
+        ? null
+        : controller.teams.firstWhere((team) => team.id == cell.ownerTeamId);
+    final complex = controller.hasOwnedInfluence(
+      cell.index,
+      BuildingType.complex,
+    );
+    final factory = controller.hasOwnedInfluence(
+      cell.index,
+      BuildingType.factory,
+    );
+    final value = controller.calculateCellValue(cell.index);
 
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'تفاصيل الخلية $cellIndex',
-                style: GoogleFonts.cairo(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
+              Expanded(
+                child: Text(
+                  'المربع ${cell.index}',
+                  style: appTextStyle(size: 18, weight: FontWeight.w900),
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.close_rounded, color: Color(0xFF94A3B8)),
                 onPressed: onClosed,
+                tooltip: 'إغلاق',
+                icon: const Icon(Icons.close_rounded, color: AppColors.muted),
               ),
             ],
           ),
-          const Divider(color: Color(0xFF334155), height: 30),
-
-        // Owner selection
-        Text(
-          'المالك (الفريق المستحوذ)',
-          style: GoogleFonts.cairo(color: const Color(0xFF94A3B8), fontSize: 12, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: const Color(0xFF0F172A),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFF334155)),
+          Text(
+            'تفاصيل الملكية والتأثير',
+            style: appTextStyle(size: 11, color: AppColors.muted),
           ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String?>(
-              value: cell.ownerTeamId,
-              dropdownColor: const Color(0xFF0F172A),
-              hint: Text('لا يوجد (بدون مالك)', style: GoogleFonts.cairo(color: const Color(0xFF475569))),
-              style: GoogleFonts.cairo(color: Colors.white, fontSize: 13),
-              icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF94A3B8)),
-              isExpanded: true,
-              items: [
-                DropdownMenuItem<String?>(
-                  value: null,
-                  child: Text('لا يوجد (بدون مالك)', style: GoogleFonts.cairo(color: const Color(0xFF94A3B8))),
-                ),
-                ...controller.teams.map((team) {
-                  return DropdownMenuItem<String?>(
-                    value: team.id,
-                    child: Row(
-                      children: [
-                        Container(width: 8, height: 8, decoration: BoxDecoration(color: team.color, shape: BoxShape.circle)),
-                        const SizedBox(width: 8),
-                        Text(team.name, style: GoogleFonts.cairo(color: Colors.white, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                  );
-                }),
-              ],
-              onChanged: (val) {
-                controller.setCellOwner(cellIndex, val);
-              },
+          const SizedBox(height: 16),
+          Text(
+            'المالك',
+            style: appTextStyle(
+              size: 11,
+              weight: FontWeight.w800,
+              color: AppColors.muted,
             ),
           ),
-        ),
-        const SizedBox(height: 20),
-
-        // Building selection
-        Text(
-          'نوع المبنى القائم',
-          style: GoogleFonts.cairo(color: const Color(0xFF94A3B8), fontSize: 12, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: const Color(0xFF0F172A),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFF334155)),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<BuildingType>(
-              value: cell.buildingType,
-              dropdownColor: const Color(0xFF0F172A),
-              style: GoogleFonts.cairo(color: Colors.white, fontSize: 13),
-              icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF94A3B8)),
-              isExpanded: true,
-              items: BuildingType.values.map((type) {
-                return DropdownMenuItem<BuildingType>(
-                  value: type,
-                  child: Text(
-                    '${type.arabicName} (تكلفة: ${type.price}، قاعدة: ${type.baseValue})',
-                    style: GoogleFonts.cairo(color: Colors.white),
-                  ),
-                );
-              }).toList(),
-              onChanged: (val) {
-                if (val != null) {
-                  controller.setCellBuilding(cellIndex, val);
-                }
-              },
-            ),
-          ),
-        ),
-        const SizedBox(height: 30),
-
-        // Calculations & Modifiers Display Card
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: const Color(0xFF0F172A),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFF334155)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
             children: [
-              Text(
-                'حساب قيمة الإنتاج المالي',
-                style: GoogleFonts.cairo(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+              _OwnerChip(
+                label: 'شاغر',
+                selected: owner == null,
+                color: AppColors.quiet,
+                onTap: () => controller.setCellOwner(cell.index, null),
               ),
-              const SizedBox(height: 12),
-              _buildValueRow('القيمة الأساسية للمبنى:', '${cell.buildingType.baseValue} ن'),
-              _buildValueRow('تكلفة التشييد للبناء:', '${cell.buildingType.price} ن'),
-              const Divider(color: Color(0xFF334155), height: 20),
-
-              // Modifiers status
-              if (cell.buildingType != BuildingType.complex && cell.buildingType != BuildingType.factory) ...[
-                _buildModifierStatusRow('مجمعات محيطة (تأثير مجمع):', complexNeighbors.isNotEmpty, complexNeighbors.length),
-                _buildModifierStatusRow('مصانع محيطة (تأثير مصنع):', factoryNeighbors.isNotEmpty, factoryNeighbors.length),
-                const Divider(color: Color(0xFF334155), height: 20),
-              ],
-
-              // Final computed value
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
+              ...controller.teams.map(
+                (team) => _OwnerChip(
+                  label: team.name,
+                  selected: owner?.id == team.id,
+                  color: team.color,
+                  onTap: () => controller.setCellOwner(cell.index, team.id),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Text(
+            'نوع المبنى',
+            style: appTextStyle(
+              size: 11,
+              weight: FontWeight.w800,
+              color: AppColors.muted,
+            ),
+          ),
+          const SizedBox(height: 8),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final width = (constraints.maxWidth - 8) / 2;
+              return Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: BuildingType.values
+                    .map(
+                      (type) => SizedBox(
+                        width: width,
+                        child: _BuildingChoice(
+                          type: type,
+                          selected: cell.buildingType == type,
+                          enabled: owner != null,
+                          onTap: () =>
+                              controller.setCellBuilding(cell.index, type),
+                        ),
+                      ),
+                    )
+                    .toList(),
+              );
+            },
+          ),
+          const SizedBox(height: 18),
+          Container(
+            padding: const EdgeInsets.all(13),
+            decoration: BoxDecoration(
+              color: AppColors.ink,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'العائد المتوقع في الجولة',
+                  style: appTextStyle(size: 11, color: AppColors.muted),
+                ),
+                const SizedBox(height: 5),
+                Row(
+                  children: [
+                    Text(
+                      '$value',
+                      style: appTextStyle(
+                        size: 28,
+                        weight: FontWeight.w900,
+                        color: owner == null
+                            ? AppColors.quiet
+                            : AppColors.green,
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      'نقطة',
+                      style: appTextStyle(
+                        size: 11,
+                        weight: FontWeight.w800,
+                        color: AppColors.muted,
+                      ),
+                    ),
+                  ],
+                ),
+                const Divider(height: 18),
+                _ValueLine(
+                  label: 'تكلفة البناء',
+                  value: '${cell.buildingType.price} نقطة',
+                ),
+                _ValueLine(
+                  label: 'القيمة الأساسية',
+                  value: '${cell.buildingType.baseValue} نقطة',
+                ),
+                if (factory || complex) ...[
+                  const SizedBox(height: 5),
                   Text(
-                    'القيمة الفعلية للجولة:',
-                    style: GoogleFonts.cairo(color: const Color(0xFF3B82F6), fontWeight: FontWeight.bold, fontSize: 13),
-                  ),
-                  Text(
-                    '$calculatedValue ن',
-                    style: GoogleFonts.cairo(color: const Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 16),
+                    factory && complex
+                        ? 'تأثير مصنع + مجمع: عودة للقيمة الأساسية'
+                        : factory
+                        ? 'متأثر بمصنع قريب'
+                        : 'متأثر بمجمع قريب',
+                    style: appTextStyle(
+                      size: 10,
+                      weight: FontWeight.w800,
+                      color: factory && complex
+                          ? AppColors.gold
+                          : AppColors.cyan,
+                    ),
                   ),
                 ],
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
-    ),
-  );
-}
-
-  Widget _buildValueRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: GoogleFonts.cairo(color: const Color(0xFF64748B), fontSize: 12)),
-          Text(value, style: GoogleFonts.cairo(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12)),
         ],
       ),
     );
   }
 
-  Widget _buildModifierStatusRow(String label, bool active, int count) {
+  Widget _emptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.touch_app_rounded,
+            color: AppColors.teal.withValues(alpha: 0.65),
+            size: 42,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'اختر مربعاً من الخريطة',
+            style: appTextStyle(size: 14, weight: FontWeight.w900),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            'ستظهر هنا خيارات الملكية والمبنى والعائد',
+            textAlign: TextAlign.center,
+            style: appTextStyle(size: 11, color: AppColors.muted),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OwnerChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final Color color;
+  final VoidCallback onTap;
+  const _OwnerChip({
+    required this.label,
+    required this.selected,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+        decoration: BoxDecoration(
+          color: selected ? color.withValues(alpha: 0.2) : AppColors.ink,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: selected ? color : AppColors.border,
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 7,
+              height: 7,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: appTextStyle(
+                size: 10,
+                weight: FontWeight.w800,
+                color: selected ? AppColors.text : AppColors.muted,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BuildingChoice extends StatelessWidget {
+  final BuildingType type;
+  final bool selected;
+  final bool enabled;
+  final VoidCallback onTap;
+  const _BuildingChoice({
+    required this.type,
+    required this.selected,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: enabled ? 1 : 0.4,
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        borderRadius: BorderRadius.circular(11),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: selected
+                ? AppColors.teal.withValues(alpha: 0.16)
+                : AppColors.ink,
+            borderRadius: BorderRadius.circular(11),
+            border: Border.all(
+              color: selected ? AppColors.teal : AppColors.border,
+              width: selected ? 1.5 : 1,
+            ),
+          ),
+          child: Column(
+            children: [
+              Icon(
+                buildingIconFor(type),
+                size: 21,
+                color: selected ? AppColors.teal : AppColors.muted,
+              ),
+              const SizedBox(height: 3),
+              Text(
+                type.arabicName,
+                style: appTextStyle(size: 10, weight: FontWeight.w900),
+              ),
+              Text(
+                '${type.price} ن',
+                style: appTextStyle(size: 8, color: AppColors.muted),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ValueLine extends StatelessWidget {
+  final String label;
+  final String value;
+  const _ValueLine({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: GoogleFonts.cairo(color: const Color(0xFF64748B), fontSize: 12)),
-          Text(
-            active ? 'نشط ($count)' : 'غير متوفر',
-            style: GoogleFonts.cairo(
-              color: active ? const Color(0xFFF59E0B) : const Color(0xFF475569),
-              fontWeight: FontWeight.bold,
-              fontSize: 11,
-            ),
-          ),
+          Text(label, style: appTextStyle(size: 10, color: AppColors.muted)),
+          Text(value, style: appTextStyle(size: 10, weight: FontWeight.w800)),
         ],
       ),
     );

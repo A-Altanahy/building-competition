@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../controllers/game_controller.dart';
-import '../models/building.dart';
 import '../models/team.dart';
+import '../theme/app_theme.dart';
 import '../utils/platform_utils.dart';
+import '../widgets/competition_board.dart';
 
 class SpectatorView extends StatelessWidget {
   const SpectatorView({super.key});
@@ -12,7 +12,7 @@ class SpectatorView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      backgroundColor: Color(0xFF090D16),
+      backgroundColor: AppColors.ink,
       body: Directionality(
         textDirection: TextDirection.rtl,
         child: SpectatorBody(showBackButton: true),
@@ -27,325 +27,369 @@ class SpectatorBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Provider.of<GameController>(context);
-    final sortedTeams = List<Team>.from(controller.teams)
+    final controller = context.watch<GameController>();
+    final teams = [...controller.teams]
       ..sort((a, b) => b.score.compareTo(a.score));
-
-    IconData getBuildingIcon(BuildingType type) {
-      switch (type) {
-        case BuildingType.house:
-          return Icons.home_rounded;
-        case BuildingType.grocery:
-          return Icons.local_grocery_store_rounded;
-        case BuildingType.market:
-          return Icons.storefront_rounded;
-        case BuildingType.hotel:
-          return Icons.hotel_rounded;
-        case BuildingType.factory:
-          return Icons.precision_manufacturing_rounded;
-        case BuildingType.complex:
-          return Icons.domain_rounded;
-      }
-    }
+    final compact = MediaQuery.sizeOf(context).width < 920;
 
     return Stack(
       children: [
-        // Main content: scoreboard and grid side-by-side
-        Row(
+        Column(
           children: [
-            // Right Section: Big Scoreboard
-            Container(
-              width: 320, // Reduced from 380 to make it fit split screens better
-              decoration: const BoxDecoration(
-                color: Color(0xFF0F172A),
-                border: Border(
-                  left: BorderSide(color: Color(0xFF1E293B), width: 2),
-                ),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 30),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 20),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      'ترتيب منافسة فتية الرشد',
-                      style: GoogleFonts.cairo(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 22,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    'الجولة الحالية: ${controller.roundNumber}',
-                    style: GoogleFonts.cairo(
-                      color: const Color(0xFF3B82F6),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-
-                  // Rank Cards
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: sortedTeams.length,
-                      itemBuilder: (context, index) {
-                        final team = sortedTeams[index];
-                        final isFirst = index == 0 && team.score > 0;
-
-                        return AnimatedContainer(
-                          duration: const Duration(milliseconds: 500),
-                          margin: const EdgeInsets.only(bottom: 12),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1E293B),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: isFirst ? const Color(0xFFF59E0B) : const Color(0xFF334155),
-                              width: isFirst ? 2 : 1,
-                            ),
-                            boxShadow: isFirst
-                                ? [
-                                    BoxShadow(
-                                      color: const Color(0xFFF59E0B).withOpacity(0.2),
-                                      blurRadius: 8,
-                                      spreadRadius: 1,
-                                    )
-                                  ]
-                                : null,
-                          ),
-                          child: Row(
-                            children: [
-                              // Rank badge
-                              Container(
-                                width: 28,
-                                height: 28,
-                                decoration: BoxDecoration(
-                                  color: isFirst ? const Color(0xFFF59E0B) : const Color(0xFF475569),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    '${index + 1}',
-                                    style: GoogleFonts.cairo(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-
-                              // Team info
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      team.name,
-                                      style: GoogleFonts.cairo(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
-                              ),
-
-                              // Color bar indicator & Points
-                              Container(
-                                width: 4,
-                                height: 24,
-                                decoration: BoxDecoration(
-                                  color: team.color,
-                                  borderRadius: BorderRadius.circular(2),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-
-                              Text(
-                                '${team.score}',
-                                style: GoogleFonts.cairo(
-                                  color: isFirst ? const Color(0xFFF59E0B) : Colors.white,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Left Section: Interactive-Looking Large Grid (Spectator Mode)
+            _SpectatorHeader(controller: controller),
             Expanded(
-              child: Container(
-                padding: const EdgeInsets.all(20.0),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final gridSpacing = 6.0;
-                    final cols = 10;
-                    final rows = 10;
-
-                    final availableWidth = constraints.maxWidth;
-                    final availableHeight = constraints.maxHeight;
-
-                    // Calculate cell size that keeps cells square and fits bounds
-                    final cellWidth = (availableWidth - (cols - 1) * gridSpacing) / cols;
-                    final cellHeight = (availableHeight - (rows - 1) * gridSpacing) / rows;
-
-                    final cellSize = cellWidth < cellHeight ? cellWidth : cellHeight;
-
-                    final gridWidth = cellSize * cols + (cols - 1) * gridSpacing;
-                    final gridHeight = cellSize * rows + (rows - 1) * gridSpacing;
-
-                    return Center(
-                      child: SizedBox(
-                        width: gridWidth,
-                        height: gridHeight,
-                        child: GridView.builder(
-                          physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: cols,
-                            crossAxisSpacing: gridSpacing,
-                            mainAxisSpacing: gridSpacing,
+              child: compact
+                  ? Column(
+                      children: [
+                        SizedBox(
+                          height: 128,
+                          child: _SpectatorStandings(
+                            teams: teams,
+                            compact: true,
                           ),
-                          itemCount: controller.board.length,
-                          itemBuilder: (context, index) {
-                            final cellIndex = index + 1;
-                            final cell = controller.board[index];
-                            final cellValue = controller.calculateCellValue(cellIndex);
-
-                            Team? ownerTeam;
-                            if (cell.ownerTeamId != null) {
-                              ownerTeam = controller.teams.firstWhere((t) => t.id == cell.ownerTeamId);
-                            }
-
-                            final isNeutral = ownerTeam == null;
-                            final themeColor = ownerTeam?.color ?? const Color(0xFF1E293B);
-
-                            return Container(
-                              decoration: BoxDecoration(
-                                color: isNeutral
-                                    ? const Color(0xFF1E293B).withOpacity(0.4)
-                                    : themeColor.withOpacity(0.25),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: isNeutral ? const Color(0xFF334155) : themeColor,
-                                  width: isNeutral ? 1 : 2,
-                                ),
-                                boxShadow: isNeutral
-                                    ? null
-                                    : [
-                                        BoxShadow(
-                                          color: themeColor.withOpacity(0.15),
-                                          blurRadius: 4,
-                                          spreadRadius: 1,
-                                        )
-                                      ],
-                              ),
-                              child: LayoutBuilder(
-                                builder: (context, cellConstraints) {
-                                  final cellHeight = cellConstraints.maxHeight;
-
-                                  return Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        child: Text(
-                                          '$cellIndex',
-                                          style: GoogleFonts.cairo(
-                                            color: isNeutral ? const Color(0xFF475569) : Colors.white70,
-                                            fontSize: cellHeight * 0.20,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                      SizedBox(height: cellHeight * 0.04),
-                                      Icon(
-                                        getBuildingIcon(cell.buildingType),
-                                        color: isNeutral ? const Color(0xFF334155) : themeColor,
-                                        size: cellHeight * 0.35,
-                                      ),
-                                      SizedBox(height: cellHeight * 0.04),
-                                      if (!isNeutral)
-                                        Flexible(
-                                          child: FittedBox(
-                                            fit: BoxFit.scaleDown,
-                                            child: Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                                              decoration: BoxDecoration(
-                                                color: themeColor,
-                                                borderRadius: BorderRadius.circular(4),
-                                              ),
-                                              child: Text(
-                                                '$cellValue',
-                                                style: GoogleFonts.cairo(
-                                                  color: Colors.white,
-                                                  fontSize: cellHeight * 0.18,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                    ],
-                                  );
-                                }
-                              ),
-                            );
-                          },
                         ),
-                      ),
-                    );
-                  },
-                ),
-              ),
+                        const SizedBox(height: 12),
+                        Expanded(child: _SpectatorBoard()),
+                      ],
+                    )
+                  : Row(
+                      children: [
+                        SizedBox(
+                          width: 340,
+                          child: _SpectatorStandings(teams: teams),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(child: _SpectatorBoard()),
+                      ],
+                    ),
             ),
           ],
         ),
-
-        // Fullscreen toggle button
         Positioned(
-          left: showBackButton ? 70 : 20,
-          top: 20,
-          child: FloatingActionButton.small(
-            backgroundColor: const Color(0xFF1E293B),
-            foregroundColor: Colors.white,
+          top: 18,
+          left: showBackButton ? 72 : 18,
+          child: _CircleButton(
+            icon: Icons.fullscreen_rounded,
             tooltip: 'شاشة كاملة',
-            onPressed: () {
-              toggleWebFullScreen();
-            },
-            child: const Icon(Icons.fullscreen_rounded),
+            onTap: toggleWebFullScreen,
           ),
         ),
-
-        // Back button floating in top-left (for moderator to exit spectator view)
         if (showBackButton)
           Positioned(
-            left: 20,
-            top: 20,
-            child: FloatingActionButton.small(
-              backgroundColor: const Color(0xFF1E293B),
-              foregroundColor: Colors.white,
-              child: const Icon(Icons.arrow_back_rounded),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+            top: 18,
+            left: 18,
+            child: _CircleButton(
+              icon: Icons.arrow_back_rounded,
+              tooltip: 'عودة',
+              onTap: () => Navigator.of(context).pop(),
             ),
           ),
       ],
+    );
+  }
+}
+
+class _SpectatorHeader extends StatelessWidget {
+  final GameController controller;
+  const _SpectatorHeader({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 92,
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        border: Border(bottom: BorderSide(color: AppColors.border)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(11),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [AppColors.teal, AppColors.cyan],
+              ),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(
+              Icons.apartment_rounded,
+              color: AppColors.ink,
+              size: 26,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'دوري فتية الرشد',
+                style: appTextStyle(size: 19, weight: FontWeight.w900),
+              ),
+              Text(
+                'المسابقة الثقافية العقارية',
+                style: appTextStyle(size: 11, color: AppColors.muted),
+              ),
+            ],
+          ),
+          const Spacer(),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+            decoration: BoxDecoration(
+              color: controller.isGameOver
+                  ? AppColors.gold.withValues(alpha: 0.15)
+                  : AppColors.teal.withValues(alpha: 0.13),
+              borderRadius: BorderRadius.circular(13),
+              border: Border.all(
+                color: controller.isGameOver ? AppColors.gold : AppColors.teal,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  controller.isGameOver
+                      ? Icons.emoji_events_rounded
+                      : Icons.flag_rounded,
+                  color: controller.isGameOver
+                      ? AppColors.gold
+                      : AppColors.teal,
+                  size: 18,
+                ),
+                const SizedBox(width: 7),
+                Text(
+                  controller.isGameOver
+                      ? 'النتيجة النهائية'
+                      : 'الجولة ${controller.roundNumber} من ${GameController.maxRounds}',
+                  style: appTextStyle(size: 13, weight: FontWeight.w900),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 86),
+        ],
+      ),
+    );
+  }
+}
+
+class _SpectatorBoard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final controller = context.watch<GameController>();
+    return Container(
+      margin: const EdgeInsets.only(left: 18, bottom: 18),
+      padding: const EdgeInsets.all(18),
+      decoration: panelDecoration(color: AppColors.canvas),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.map_rounded, color: AppColors.teal, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'خريطة المدينة',
+                style: appTextStyle(size: 16, weight: FontWeight.w900),
+              ),
+              const Spacer(),
+              Text(
+                '${controller.board.where((cell) => cell.ownerTeamId != null).length} مبنى مستثمَر',
+                style: appTextStyle(size: 11, color: AppColors.muted),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Expanded(child: CompetitionBoard(spectator: true)),
+        ],
+      ),
+    );
+  }
+}
+
+class _SpectatorStandings extends StatelessWidget {
+  final List<Team> teams;
+  final bool compact;
+  const _SpectatorStandings({required this.teams, this.compact = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = context.read<GameController>();
+    return Container(
+      margin: EdgeInsets.only(
+        right: compact ? 18 : 18,
+        bottom: compact ? 0 : 18,
+      ),
+      padding: const EdgeInsets.all(16),
+      decoration: panelDecoration(color: AppColors.surface),
+      child: compact
+          ? ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: teams.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
+              itemBuilder: (context, index) => SizedBox(
+                width: 205,
+                child: _StandingsCard(
+                  team: teams[index],
+                  rank: index + 1,
+                  controller: controller,
+                ),
+              ),
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.emoji_events_rounded,
+                      color: AppColors.gold,
+                      size: 22,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'ترتيب الفرق',
+                      style: appTextStyle(size: 18, weight: FontWeight.w900),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  'النقاط الحالية والعائد المتوقع',
+                  style: appTextStyle(size: 11, color: AppColors.muted),
+                ),
+                const SizedBox(height: 18),
+                Expanded(
+                  child: ListView.separated(
+                    itemCount: teams.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 10),
+                    itemBuilder: (context, index) => _StandingsCard(
+                      team: teams[index],
+                      rank: index + 1,
+                      controller: controller,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+}
+
+class _StandingsCard extends StatelessWidget {
+  final Team team;
+  final int rank;
+  final GameController controller;
+  const _StandingsCard({
+    required this.team,
+    required this.rank,
+    required this.controller,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 400),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.ink,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: rank == 1 ? AppColors.gold : AppColors.border,
+          width: rank == 1 ? 1.5 : 1,
+        ),
+        boxShadow: rank == 1
+            ? [
+                BoxShadow(
+                  color: AppColors.gold.withValues(alpha: 0.12),
+                  blurRadius: 14,
+                ),
+              ]
+            : null,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: rank == 1 ? AppColors.gold : AppColors.border,
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                '$rank',
+                style: appTextStyle(
+                  size: 12,
+                  weight: FontWeight.w900,
+                  color: AppColors.ink,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Container(
+            width: 5,
+            height: 32,
+            decoration: BoxDecoration(
+              color: team.color,
+              borderRadius: BorderRadius.circular(6),
+            ),
+          ),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  team.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: appTextStyle(size: 12, weight: FontWeight.w900),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${controller.ownedCellCount(team.id)} مبنى  •  +${controller.calculateTeamIncome(team.id)} / ج',
+                  style: appTextStyle(size: 9, color: AppColors.muted),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            '${team.score}',
+            style: appTextStyle(
+              size: 18,
+              weight: FontWeight.w900,
+              color: rank == 1 ? AppColors.gold : AppColors.text,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CircleButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+  const _CircleButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: IconButton(
+        onPressed: onTap,
+        icon: Icon(icon, color: AppColors.text),
+        style: IconButton.styleFrom(
+          backgroundColor: AppColors.surface,
+          side: const BorderSide(color: AppColors.border),
+        ),
+      ),
     );
   }
 }

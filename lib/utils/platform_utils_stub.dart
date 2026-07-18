@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:window_manager/window_manager.dart';
@@ -58,16 +57,19 @@ void initWebSync(GameController controller) async {
       if (!await parentDir.exists()) {
         await parentDir.create(recursive: true);
       }
-      
+
       // A. Directory Watcher
-      parentDir.watch().listen((event) async {
-        if (event.path.endsWith('live_state.json')) {
-          await Future.delayed(const Duration(milliseconds: 50));
-          await _readLiveFile(file, controller);
-        }
-      }, onError: (e) {
-        debugPrint('Directory watch error: $e');
-      });
+      parentDir.watch().listen(
+        (event) async {
+          if (event.path.endsWith('live_state.json')) {
+            await Future.delayed(const Duration(milliseconds: 50));
+            await _readLiveFile(file, controller);
+          }
+        },
+        onError: (e) {
+          debugPrint('Directory watch error: $e');
+        },
+      );
 
       // B. Timer Polling Fallback (every 500ms)
       DateTime? lastReadTime;
@@ -84,7 +86,7 @@ void initWebSync(GameController controller) async {
           // Ignore read errors
         }
       });
-    } 
+    }
     // 3. For Moderator mode: write changes to the live file
     else {
       controller.addListener(() async {
@@ -107,10 +109,10 @@ void toggleWebFullScreen() async {
   try {
     bool isFullScreen = await windowManager.isFullScreen();
     await windowManager.setFullScreen(!isFullScreen);
-    
+
     // Give Windows OS 100ms to apply fullscreen transitions
     await Future.delayed(const Duration(milliseconds: 100));
-    
+
     // Refocus and show to force OS message loop to update hit-test coordinate system
     await windowManager.focus();
     await windowManager.show();
@@ -122,7 +124,7 @@ void toggleWebFullScreen() async {
 Future<void> initializeDesktopWindow() async {
   try {
     await windowManager.ensureInitialized();
-    
+
     WindowOptions windowOptions = WindowOptions(
       size: const Size(1280, 720),
       center: true,
@@ -130,7 +132,7 @@ Future<void> initializeDesktopWindow() async {
       skipTaskbar: false,
       title: _isSpectator ? 'شاشة العرض (الجمهور)' : 'لوحة التحكم (المنسق)',
     );
-    
+
     await windowManager.waitUntilReadyToShow(windowOptions, () async {
       await windowManager.show();
       await windowManager.focus();

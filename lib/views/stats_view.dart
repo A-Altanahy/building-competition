@@ -5,6 +5,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../controllers/game_controller.dart';
 import '../models/team.dart';
 import '../models/building.dart';
+import '../theme/app_theme.dart';
 
 class StatsView extends StatelessWidget {
   const StatsView({super.key});
@@ -27,7 +28,7 @@ class StatsView extends StatelessWidget {
     final isNarrow = screenWidth < 900;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A), // Slate 900
+      backgroundColor: AppColors.ink, // Slate 900
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -43,10 +44,7 @@ class StatsView extends StatelessWidget {
             ),
             Text(
               'رسم بياني يوضح أداء الفرق والنمو المالي وملكيات الأراضي',
-              style: GoogleFonts.cairo(
-                color: const Color(0xFF64748B),
-                fontSize: 14,
-              ),
+              style: GoogleFonts.cairo(color: AppColors.quiet, fontSize: 14),
             ),
             const SizedBox(height: 30),
 
@@ -62,9 +60,9 @@ class StatsView extends StatelessWidget {
                     height: 320,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1E293B),
+                      color: AppColors.surface,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFF334155)),
+                      border: Border.all(color: AppColors.border),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,9 +85,9 @@ class StatsView extends StatelessWidget {
                     height: 320,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1E293B),
+                      color: AppColors.surface,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFF334155)),
+                      border: Border.all(color: AppColors.border),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -109,7 +107,10 @@ class StatsView extends StatelessWidget {
                               : Center(
                                   child: Text(
                                     'لا توجد بيانات تاريخية كافية. قم بإنهاء بعض الجولات لعرض الرسم البياني.',
-                                    style: GoogleFonts.cairo(color: const Color(0xFF64748B), fontSize: 13),
+                                    style: GoogleFonts.cairo(
+                                      color: AppColors.quiet,
+                                      fontSize: 13,
+                                    ),
                                   ),
                                 ),
                         ),
@@ -127,9 +128,9 @@ class StatsView extends StatelessWidget {
                       height: 350,
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1E293B),
+                        color: AppColors.surface,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFF334155)),
+                        border: Border.all(color: AppColors.border),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -156,9 +157,9 @@ class StatsView extends StatelessWidget {
                       height: 350,
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1E293B),
+                        color: AppColors.surface,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFF334155)),
+                        border: Border.all(color: AppColors.border),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -178,7 +179,10 @@ class StatsView extends StatelessWidget {
                                 : Center(
                                     child: Text(
                                       'لا توجد بيانات تاريخية كافية. قم بإنهاء بعض الجولات لعرض الرسم البياني.',
-                                      style: GoogleFonts.cairo(color: const Color(0xFF64748B), fontSize: 13),
+                                      style: GoogleFonts.cairo(
+                                        color: AppColors.quiet,
+                                        fontSize: 13,
+                                      ),
                                     ),
                                   ),
                           ),
@@ -194,9 +198,9 @@ class StatsView extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFF1E293B),
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFF334155)),
+                border: Border.all(color: AppColors.border),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -221,13 +225,17 @@ class StatsView extends StatelessWidget {
   }
 
   Widget _buildQuickSummaryStats(GameController controller, bool isNarrow) {
-    int totalOwnedCells = controller.board.where((c) => c.ownerTeamId != null).length;
+    int totalOwnedCells = controller.board
+        .where((c) => c.ownerTeamId != null)
+        .length;
     int unownedCells = controller.board.length - totalOwnedCells;
     int mostAssetsCount = 0;
     Team? topAssetTeam;
 
     for (var team in controller.teams) {
-      int count = controller.board.where((c) => c.ownerTeamId == team.id).length;
+      int count = controller.board
+          .where((c) => c.ownerTeamId == team.id)
+          .length;
       if (count > mostAssetsCount) {
         mostAssetsCount = count;
         topAssetTeam = team;
@@ -235,11 +243,25 @@ class StatsView extends StatelessWidget {
     }
 
     final cards = [
-      _buildStatCard('إجمالي الأراضي المستصلحة', '$totalOwnedCells / 100', Icons.landscape_rounded, Colors.green, isNarrow),
-      _buildStatCard('الأراضي الشاغرة (المتاحة)', '$unownedCells', Icons.hourglass_empty_rounded, Colors.amber, isNarrow),
+      _buildStatCard(
+        'إجمالي الأراضي المستصلحة',
+        '$totalOwnedCells من 100',
+        Icons.landscape_rounded,
+        Colors.green,
+        isNarrow,
+      ),
+      _buildStatCard(
+        'الأراضي الشاغرة (المتاحة)',
+        '$unownedCells',
+        Icons.hourglass_empty_rounded,
+        Colors.amber,
+        isNarrow,
+      ),
       _buildStatCard(
         'أكثر المالكين للأراضي',
-        topAssetTeam != null ? '${topAssetTeam.name} ($mostAssetsCount أراضي)' : 'لا يوجد حاليًا',
+        topAssetTeam != null
+            ? '${topAssetTeam.name} ($mostAssetsCount أراضي)'
+            : 'لا يوجد حاليًا',
         Icons.apartment_rounded,
         Colors.blue,
         isNarrow,
@@ -269,20 +291,26 @@ class StatsView extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color, bool isNarrow) {
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+    bool isNarrow,
+  ) {
     Widget container = Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF334155)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
+              color: color.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: color, size: 28),
@@ -294,13 +322,20 @@ class StatsView extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: GoogleFonts.cairo(color: const Color(0xFF94A3B8), fontSize: 12),
+                  style: GoogleFonts.cairo(
+                    color: AppColors.muted,
+                    fontSize: 12,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
                 Text(
                   value,
-                  style: GoogleFonts.cairo(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                  style: GoogleFonts.cairo(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
@@ -318,8 +353,11 @@ class StatsView extends StatelessWidget {
 
   Widget _buildBarChart(List<Team> teams) {
     // Find the max score among teams
-    int maxScoreVal = teams.isEmpty ? 0 : teams.map((t) => t.score).reduce((a, b) => a > b ? a : b);
-    double calculatedMaxY = (maxScoreVal < 0 ? 100 : maxScoreVal + 500).toDouble();
+    int maxScoreVal = teams.isEmpty
+        ? 0
+        : teams.map((t) => t.score).reduce((a, b) => a > b ? a : b);
+    double calculatedMaxY = (maxScoreVal < 0 ? 100 : maxScoreVal + 500)
+        .toDouble();
 
     return BarChart(
       BarChartData(
@@ -328,12 +366,16 @@ class StatsView extends StatelessWidget {
         barTouchData: BarTouchData(
           enabled: true,
           touchTooltipData: BarTouchTooltipData(
-            getTooltipColor: (_) => const Color(0xFF0F172A),
+            getTooltipColor: (_) => AppColors.ink,
             tooltipBorder: const BorderSide(color: Color(0xFF334155)),
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
               return BarTooltipItem(
                 '${teams[group.x.toInt()].name}\n${rod.toY.toInt()} نقطة',
-                GoogleFonts.cairo(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                GoogleFonts.cairo(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
               );
             },
           ),
@@ -350,7 +392,11 @@ class StatsView extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Text(
                       teams[index].name.split(' ').take(2).join(' '),
-                      style: GoogleFonts.cairo(color: const Color(0xFF94A3B8), fontSize: 9, fontWeight: FontWeight.bold),
+                      style: GoogleFonts.cairo(
+                        color: AppColors.muted,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   );
                 }
@@ -358,9 +404,15 @@ class StatsView extends StatelessWidget {
               },
             ),
           ),
-          leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
         ),
         borderData: FlBorderData(show: false),
         gridData: const FlGridData(show: false),
@@ -377,7 +429,7 @@ class StatsView extends StatelessWidget {
                   topLeft: Radius.circular(6),
                   topRight: Radius.circular(6),
                 ),
-              )
+              ),
             ],
           );
         }),
@@ -387,8 +439,10 @@ class StatsView extends StatelessWidget {
 
   Widget _buildLineChart(List<Team> teams) {
     // Find the max length of scores history and check min/max values
-    int maxRounds = teams.map((t) => t.scoreHistory.length).reduce((a, b) => a > b ? a : b);
-    
+    int maxRounds = teams
+        .map((t) => t.scoreHistory.length)
+        .reduce((a, b) => a > b ? a : b);
+
     int minScoreVal = 0;
     int maxScoreVal = 0;
     for (var team in teams) {
@@ -399,8 +453,11 @@ class StatsView extends StatelessWidget {
       }
     }
 
-    double calculatedMinY = minScoreVal < 0 ? (minScoreVal - 200).toDouble() : 0.0;
-    double calculatedMaxY = (maxScoreVal < 0 ? 100 : maxScoreVal + 500).toDouble();
+    double calculatedMinY = minScoreVal < 0
+        ? (minScoreVal - 200).toDouble()
+        : 0.0;
+    double calculatedMaxY = (maxScoreVal < 0 ? 100 : maxScoreVal + 500)
+        .toDouble();
 
     return LineChart(
       LineChartData(
@@ -411,8 +468,10 @@ class StatsView extends StatelessWidget {
         gridData: FlGridData(
           show: true,
           drawVerticalLine: true,
-          getDrawingHorizontalLine: (_) => const FlLine(color: Color(0xFF334155), strokeWidth: 1),
-          getDrawingVerticalLine: (_) => const FlLine(color: Color(0xFF334155), strokeWidth: 1),
+          getDrawingHorizontalLine: (_) =>
+              const FlLine(color: Color(0xFF334155), strokeWidth: 1),
+          getDrawingVerticalLine: (_) =>
+              const FlLine(color: Color(0xFF334155), strokeWidth: 1),
         ),
         borderData: FlBorderData(show: false),
         titlesData: FlTitlesData(
@@ -423,7 +482,10 @@ class StatsView extends StatelessWidget {
               getTitlesWidget: (val, meta) {
                 return Text(
                   'ج ${val.toInt() + 1}',
-                  style: GoogleFonts.cairo(color: const Color(0xFF64748B), fontSize: 10),
+                  style: GoogleFonts.cairo(
+                    color: AppColors.quiet,
+                    fontSize: 10,
+                  ),
                 );
               },
             ),
@@ -436,25 +498,35 @@ class StatsView extends StatelessWidget {
                 if (val % 500 == 0 || val == calculatedMaxY - 500) {
                   return Text(
                     '${val.toInt()}',
-                    style: GoogleFonts.cairo(color: const Color(0xFF64748B), fontSize: 9),
+                    style: GoogleFonts.cairo(
+                      color: AppColors.quiet,
+                      fontSize: 9,
+                    ),
                   );
                 }
                 return const Text('');
               },
             ),
           ),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
         ),
         lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (_) => const Color(0xFF0F172A),
+            getTooltipColor: (_) => AppColors.ink,
           ),
         ),
         lineBarsData: teams.map((team) {
           return LineChartBarData(
             spots: List.generate(team.scoreHistory.length, (index) {
-              return FlSpot(index.toDouble(), team.scoreHistory[index].toDouble());
+              return FlSpot(
+                index.toDouble(),
+                team.scoreHistory[index].toDouble(),
+              );
             }),
             isCurved: true,
             color: team.color,
@@ -463,7 +535,7 @@ class StatsView extends StatelessWidget {
             dotData: const FlDotData(show: true),
             belowBarData: BarAreaData(
               show: true,
-              color: team.color.withOpacity(0.08),
+              color: team.color.withValues(alpha: 0.08),
             ),
           );
         }).toList(),
@@ -473,28 +545,59 @@ class StatsView extends StatelessWidget {
 
   Widget _buildTeamAssetRow(Team team, GameController controller) {
     // Count properties owned by this team
-    final cells = controller.board.where((c) => c.ownerTeamId == team.id).toList();
+    final cells = controller.board
+        .where((c) => c.ownerTeamId == team.id)
+        .toList();
     if (cells.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
         child: Row(
           children: [
-            Container(width: 8, height: 8, decoration: BoxDecoration(color: team.color, shape: BoxShape.circle)),
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: team.color,
+                shape: BoxShape.circle,
+              ),
+            ),
             const SizedBox(width: 10),
-            Text(team.name, style: GoogleFonts.cairo(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+            Text(
+              team.name,
+              style: GoogleFonts.cairo(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+            ),
             const Spacer(),
-            Text('لا يملك أي أراضي حاليًا', style: GoogleFonts.cairo(color: const Color(0xFF475569), fontSize: 12)),
+            Text(
+              'لا يملك أي أراضي حاليًا',
+              style: GoogleFonts.cairo(color: AppColors.quiet, fontSize: 12),
+            ),
           ],
         ),
       );
     }
 
-    final houseCount = cells.where((c) => c.buildingType == BuildingType.house).length;
-    final groceryCount = cells.where((c) => c.buildingType == BuildingType.grocery).length;
-    final marketCount = cells.where((c) => c.buildingType == BuildingType.market).length;
-    final hotelCount = cells.where((c) => c.buildingType == BuildingType.hotel).length;
-    final factoryCount = cells.where((c) => c.buildingType == BuildingType.factory).length;
-    final complexCount = cells.where((c) => c.buildingType == BuildingType.complex).length;
+    final houseCount = cells
+        .where((c) => c.buildingType == BuildingType.house)
+        .length;
+    final groceryCount = cells
+        .where((c) => c.buildingType == BuildingType.grocery)
+        .length;
+    final marketCount = cells
+        .where((c) => c.buildingType == BuildingType.market)
+        .length;
+    final hotelCount = cells
+        .where((c) => c.buildingType == BuildingType.hotel)
+        .length;
+    final factoryCount = cells
+        .where((c) => c.buildingType == BuildingType.factory)
+        .length;
+    final complexCount = cells
+        .where((c) => c.buildingType == BuildingType.complex)
+        .length;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
@@ -503,16 +606,31 @@ class StatsView extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(width: 10, height: 10, decoration: BoxDecoration(color: team.color, shape: BoxShape.circle)),
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: team.color,
+                  shape: BoxShape.circle,
+                ),
+              ),
               const SizedBox(width: 10),
               Text(
                 team.name,
-                style: GoogleFonts.cairo(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                style: GoogleFonts.cairo(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
               ),
               const Spacer(),
               Text(
                 'إجمالي العقارات: ${cells.length}',
-                style: GoogleFonts.cairo(color: const Color(0xFF94A3B8), fontSize: 12, fontWeight: FontWeight.w600),
+                style: GoogleFonts.cairo(
+                  color: AppColors.muted,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),
@@ -522,12 +640,48 @@ class StatsView extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
-              if (houseCount > 0) _buildAssetChip('بيوت', houseCount, BuildingType.house, team.color),
-              if (groceryCount > 0) _buildAssetChip('بقالات', groceryCount, BuildingType.grocery, team.color),
-              if (marketCount > 0) _buildAssetChip('أسواق', marketCount, BuildingType.market, team.color),
-              if (hotelCount > 0) _buildAssetChip('فنادق', hotelCount, BuildingType.hotel, team.color),
-              if (factoryCount > 0) _buildAssetChip('مصانع', factoryCount, BuildingType.factory, team.color),
-              if (complexCount > 0) _buildAssetChip('مجمعات', complexCount, BuildingType.complex, team.color),
+              if (houseCount > 0)
+                _buildAssetChip(
+                  'بيوت',
+                  houseCount,
+                  BuildingType.house,
+                  team.color,
+                ),
+              if (groceryCount > 0)
+                _buildAssetChip(
+                  'بقالات',
+                  groceryCount,
+                  BuildingType.grocery,
+                  team.color,
+                ),
+              if (marketCount > 0)
+                _buildAssetChip(
+                  'أسواق',
+                  marketCount,
+                  BuildingType.market,
+                  team.color,
+                ),
+              if (hotelCount > 0)
+                _buildAssetChip(
+                  'فنادق',
+                  hotelCount,
+                  BuildingType.hotel,
+                  team.color,
+                ),
+              if (factoryCount > 0)
+                _buildAssetChip(
+                  'مصانع',
+                  factoryCount,
+                  BuildingType.factory,
+                  team.color,
+                ),
+              if (complexCount > 0)
+                _buildAssetChip(
+                  'مجمعات',
+                  complexCount,
+                  BuildingType.complex,
+                  team.color,
+                ),
             ],
           ),
           const Divider(color: Color(0xFF334155), height: 24),
@@ -536,7 +690,12 @@ class StatsView extends StatelessWidget {
     );
   }
 
-  Widget _buildAssetChip(String label, int count, BuildingType type, Color teamColor) {
+  Widget _buildAssetChip(
+    String label,
+    int count,
+    BuildingType type,
+    Color teamColor,
+  ) {
     IconData getIcon() {
       switch (type) {
         case BuildingType.house:
@@ -557,9 +716,9 @@ class StatsView extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A),
+        color: AppColors.ink,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: teamColor.withOpacity(0.4)),
+        border: Border.all(color: teamColor.withValues(alpha: 0.4)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -568,11 +727,14 @@ class StatsView extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             '$label: $count',
-            style: GoogleFonts.cairo(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+            style: GoogleFonts.cairo(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),
     );
   }
 }
-

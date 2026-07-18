@@ -32,18 +32,18 @@ class Team {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'color': color.value,
-        'score': score,
-        'scoreHistory': scoreHistory,
-      };
+    'id': id,
+    'name': name,
+    'color': color.toARGB32(),
+    'score': score,
+    'scoreHistory': scoreHistory,
+  };
 
   factory Team.fromJson(Map<String, dynamic> json) => Team(
-        id: json['id'] as String,
-        name: json['name'] as String,
-        color: Color(json['color'] as int),
-        score: json['score'] as int,
-        scoreHistory: List<int>.from(json['scoreHistory'] as List),
-      );
+    id: json['id'] as String,
+    name: json['name'] as String,
+    color: Color(json['color'] as int),
+    score: json['score'] as int,
+    scoreHistory: List<int>.from(json['scoreHistory'] as List),
+  );
 }

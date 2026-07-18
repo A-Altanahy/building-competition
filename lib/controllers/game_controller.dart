@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/team.dart';
@@ -26,6 +27,9 @@ class GameController extends ChangeNotifier {
   List<Team> get teams => _teams;
   List<BoardCell> get board => _board;
   int get roundNumber => _roundNumber;
+  static const int maxRounds = 6;
+  bool get isGameOver => _roundNumber > maxRounds;
+  int get buildAllowance => _roundNumber.isEven ? 2 : 1;
 
   bool get canUndo => _undoStack.isNotEmpty;
   bool get canRedo => _redoStack.isNotEmpty;
@@ -83,10 +87,25 @@ class GameController extends ChangeNotifier {
     return surrounding;
   }
 
+  bool hasOwnedInfluence(int index, BuildingType type) {
+    return getSurroundingIndices(
+      index,
+    ).any((neighbor) => _board[neighbor - 1].buildingType == type);
+  }
+
+  int calculateTeamIncome(String teamId) {
+    return _board
+        .where((cell) => cell.ownerTeamId == teamId)
+        .fold(0, (total, cell) => total + calculateCellValue(cell.index));
+  }
+
+  int ownedCellCount(String teamId) =>
+      _board.where((cell) => cell.ownerTeamId == teamId).length;
+
   // Calculate cell value dynamically based on surrounding Complexes and Factories
   int calculateCellValue(int index) {
     final cell = _board[index - 1];
-    
+
     // Custom overrides take highest priority if set
     if (cell.customValueOverride != null) {
       return cell.customValueOverride!;
@@ -150,15 +169,15 @@ class GameController extends ChangeNotifier {
     _board[index - 1] = _board[index - 1].copyWith(
       ownerTeamId: teamId,
       clearOwner: teamId == null,
+      buildingType: teamId == null ? BuildingType.house : null,
+      clearCustomValueOverride: teamId == null,
     );
     notifyListeners();
   }
 
   // Set building type of cell (1-indexed)
   void setCellBuilding(int index, BuildingType buildingType) {
-    _board[index - 1] = _board[index - 1].copyWith(
-      buildingType: buildingType,
-    );
+    _board[index - 1] = _board[index - 1].copyWith(buildingType: buildingType);
     notifyListeners();
   }
 
@@ -166,6 +185,7 @@ class GameController extends ChangeNotifier {
   void setCellOverrideValue(int index, int? value) {
     _board[index - 1] = _board[index - 1].copyWith(
       customValueOverride: value,
+      clearCustomValueOverride: value == null,
     );
     notifyListeners();
   }
@@ -187,6 +207,7 @@ class GameController extends ChangeNotifier {
 
   // End Round: calculate scores and deduct costs
   void endRound() {
+    if (isGameOver) return;
     _saveSnapshot();
 
     // 1. Calculate building values for this round
@@ -311,8 +332,12 @@ class GameController extends ChangeNotifier {
       'roundNumber': _roundNumber,
       'teams': _teams.map((t) => t.toJson()).toList(),
       'board': _board.map((c) => c.toJson()).toList(),
-      'previousRoundOwners': _previousRoundOwners.map((k, v) => MapEntry(k.toString(), v)),
-      'previousRoundBuildings': _previousRoundBuildings.map((k, v) => MapEntry(k.toString(), v.name)),
+      'previousRoundOwners': _previousRoundOwners.map(
+        (k, v) => MapEntry(k.toString(), v),
+      ),
+      'previousRoundBuildings': _previousRoundBuildings.map(
+        (k, v) => MapEntry(k.toString(), v.name),
+      ),
     };
     return jsonEncode(data);
   }
@@ -322,14 +347,20 @@ class GameController extends ChangeNotifier {
     final data = jsonDecode(jsonString) as Map<String, dynamic>;
 
     if (data.containsKey('settings')) {
-      _settings = GameSettings.fromJson(data['settings'] as Map<String, dynamic>);
+      _settings = GameSettings.fromJson(
+        data['settings'] as Map<String, dynamic>,
+      );
     }
 
     _roundNumber = data['roundNumber'] as int;
 
-    _teams = (data['teams'] as List).map((t) => Team.fromJson(t as Map<String, dynamic>)).toList();
+    _teams = (data['teams'] as List)
+        .map((t) => Team.fromJson(t as Map<String, dynamic>))
+        .toList();
 
-    _board = (data['board'] as List).map((c) => BoardCell.fromJson(c as Map<String, dynamic>)).toList();
+    _board = (data['board'] as List)
+        .map((c) => BoardCell.fromJson(c as Map<String, dynamic>))
+        .toList();
 
     _previousRoundOwners.clear();
     if (data.containsKey('previousRoundOwners')) {
@@ -350,7 +381,9 @@ class GameController extends ChangeNotifier {
     if (data.containsKey('previousRoundBuildings')) {
       final prevB = data['previousRoundBuildings'] as Map<String, dynamic>;
       prevB.forEach((k, v) {
-        _previousRoundBuildings[int.parse(k)] = BuildingType.values.byName(v as String);
+        _previousRoundBuildings[int.parse(k)] = BuildingType.values.byName(
+          v as String,
+        );
       });
     }
 
@@ -361,6 +394,9 @@ class GameController extends ChangeNotifier {
 
   // Save game to default storage location or custom file
   Future<File> saveToFile(String filename) async {
+    if (kIsWeb) {
+      throw UnsupportedError('حفظ الملفات غير متاح في نسخة الويب');
+    }
     final directory = await getApplicationDocumentsDirectory();
     final path = '${directory.path}/cultural_competition/$filename.json';
     final file = File(path);
@@ -378,6 +414,7 @@ class GameController extends ChangeNotifier {
 
   // Get list of saved files
   Future<List<File>> getSavedGames() async {
+    if (kIsWeb) return <File>[];
     final directory = await getApplicationDocumentsDirectory();
     final folderPath = '${directory.path}/cultural_competition';
     final folder = Directory(folderPath);

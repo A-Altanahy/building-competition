@@ -35,11 +35,11 @@ class GameSettings {
   }
 
   Map<String, dynamic> toJson() => {
-        'teamNames': teamNames,
-        'teamColors': teamColors.map((k, v) => MapEntry(k, v.value)),
-        'gridRows': gridRows,
-        'gridCols': gridCols,
-      };
+    'teamNames': teamNames,
+    'teamColors': teamColors.map((k, v) => MapEntry(k, v.toARGB32())),
+    'gridRows': gridRows,
+    'gridCols': gridCols,
+  };
 
   factory GameSettings.fromJson(Map<String, dynamic> json) {
     final colorsJson = json['teamColors'] as Map<String, dynamic>;
