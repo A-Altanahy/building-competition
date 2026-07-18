@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0">
+  <title>المسابقة الثقافية لدوري فتية الرشد</title>
+  <!-- CSS -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="css/materialize.css" type="text/css" rel="stylesheet" media="screen,projection">
+  <link href="css/style.css" type="text/css" rel="stylesheet" media="screen,projection">
+  <link href="f/css/all.css" rel="stylesheet">
+  <link href="f/css/fontawesome.css" rel="stylesheet">
+  <link href="f/css/brands.css" rel="stylesheet">
+  <link href="f/css/solid.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <style>
+    table {
+      font-family: Arial, sans-serif;
+      border-collapse: collapse;
+      width: 100%;
+    }
+    td, th {
+      border: 1px solid #dddddd;
+      text-align: center;
+      padding: 6px;
+      width: 100px;
+      height: 100px;
+    }
+    tr:nth-child(even) {
+      background-color: white;
+    }
+    .input-group-prepend .btn {
+      width: 150px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container-fluid">
+    <center>
+      <div class="alert alert-success">
+        <h1><strong>المسابقة الثقافية لدوري فتية الرشد</strong></h1>
+      </div>
+    </center>
+    <button id="endRoundButton" type="button" class="btn btn-danger">إنهاء الجولة</button>
+    <button id="undoLastRoundButton" type="button" class="btn btn-warning">تراجع عن جولة</button>
+    <br><br>
+    <div class="jumbotron">
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
+          <span class="btn btn-danger">علي بن أبي طالب</span>
+        </div>
+        <input type="number" id="team1Input" class="form-control">
+      </div>
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
+          <span class="btn btn-dark">مصعب بن عمير</span>
+        </div>
+        <input type="number" id="team2Input" class="form-control">
+      </div>
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
+          <span class="btn btn-primary">عبدالله بن عمر</span>
+        </div>
+        <input type="number" id="team3Input" class="form-control">
+      </div>
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
+          <span class="btn btn-success">عبدالله بن عباس</span>
+        </div>
+        <input type="number" id="team4Input" class="form-control">
+      </div>
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
+          <span class="btn btn-info">أنس بن مالك</span>
+        </div>
+        <input type="number" id="team5Input" class="form-control">
+      </div>
+      <button id="sendButton" type="button" class="btn btn-success">إضافة</button>
+      <button id="deleteButton" type="button" class="btn btn-danger">خصم</button>
+      <div id="results"></div>
+    </div>
+    <table id="table1" style="display: inline-block;" class="table">
+      <thead>
+        <tr>
+          <th>0</th>
+          <th>1</th>
+          <th>2</th>
+          <th>3</th>
+          <th>4</th>
+          <th>5</th>
+          <th>6</th>
+          <th>7</th>
+          <th>8</th>
+          <th>9</th>
+          <th>10</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <table id="displayTable" style="display: inline-block;" class="table"></table>
+  </div>
+  <!-- JS -->
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.com/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+  <script src="test.js"></script>
+</body>
+</html>
