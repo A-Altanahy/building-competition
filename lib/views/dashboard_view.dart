@@ -6,6 +6,7 @@ import '../models/team.dart';
 import '../theme/app_theme.dart';
 import '../utils/platform_utils.dart';
 import '../widgets/competition_board.dart';
+import '../widgets/isometric_board.dart';
 import 'settings_view.dart';
 import 'spectator_view.dart';
 import 'stats_view.dart';
@@ -20,6 +21,8 @@ class DashboardView extends StatefulWidget {
 class _DashboardViewState extends State<DashboardView> {
   int _activeTab = 0;
   int? _selectedCellIndex;
+  bool _isIsometricView = true;
+
 
   @override
   Widget build(BuildContext context) {
@@ -279,6 +282,15 @@ class _DashboardViewState extends State<DashboardView> {
                 ],
               ),
               const Spacer(),
+              IconButton(
+                tooltip: _isIsometricView ? 'منظور ثنائي الأبعاد' : 'منظور ثلاثي الأبعاد (2.5D)',
+                onPressed: () => setState(() => _isIsometricView = !_isIsometricView),
+                icon: Icon(
+                  _isIsometricView ? Icons.grid_on_rounded : Icons.view_in_ar_rounded,
+                  color: AppColors.gold,
+                ),
+              ),
+              const SizedBox(width: 8),
               _LegendChip(color: AppColors.gold, label: 'تأثير مصنع'),
               const SizedBox(width: 7),
               _LegendChip(color: AppColors.cyan, label: 'تأثير مجمع'),
@@ -286,11 +298,17 @@ class _DashboardViewState extends State<DashboardView> {
           ),
           const SizedBox(height: 14),
           Expanded(
-            child: CompetitionBoard(
-              selectedIndex: _selectedCellIndex,
-              onCellSelected: (index) =>
-                  setState(() => _selectedCellIndex = index),
-            ),
+            child: _isIsometricView
+                ? IsometricBoardWidget(
+                    selectedIndex: _selectedCellIndex,
+                    onCellSelected: (index) =>
+                        setState(() => _selectedCellIndex = index),
+                  )
+                : CompetitionBoard(
+                    selectedIndex: _selectedCellIndex,
+                    onCellSelected: (index) =>
+                        setState(() => _selectedCellIndex = index),
+                  ),
           ),
         ],
       ),

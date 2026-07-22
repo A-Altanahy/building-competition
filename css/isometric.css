@@ -1,0 +1,632 @@
+/* ==========================================================================
+   الأشبال - تحدي البناء (Building Competition) - Full Screen 2.5D Isometric Board
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Readex+Pro:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Color Palette */
+  --bg-warm: #F6F2E8;
+  --bg-pattern-tint: rgba(184, 134, 11, 0.04);
+  --primary-gold: #D4AF37;
+  --primary-gold-light: #FFE885;
+  --primary-gold-dark: #997A15;
+  --primary-orange: #FF6B00;
+  --primary-orange-light: #FF9E42;
+  
+  --accent-cyan: #00F5FF;
+  --accent-cyan-glow: rgba(0, 245, 255, 0.4);
+  --accent-red: #FF3B30;
+  --accent-red-glow: rgba(255, 59, 48, 0.4);
+  --accent-green: #34C759;
+  --accent-yellow: #FFCC00;
+
+  /* Slate & Charcoal Board */
+  --slate-dark: #1E222B;
+  --slate-mid: #2A303C;
+  --slate-light: #3A4252;
+  --slate-border: #4A5468;
+  
+  /* Text & Surfaces */
+  --surface-glass: rgba(255, 255, 255, 0.88);
+  --surface-dark-glass: rgba(25, 30, 40, 0.9);
+  --text-dark: #1C1E23;
+  --text-muted: #6C757D;
+  --text-gold: #E5B22D;
+
+  /* Team Colors */
+  --team-1: #E63946; /* علي بن أبي طالب */
+  --team-2: #2B2D42; /* مصعب بن عمير */
+  --team-3: #1D3557; /* عبدالله بن عمر */
+  --team-4: #2A9D8F; /* عبدالله بن عباس */
+  --team-5: #E76F51; /* أنس بن مالك */
+
+  /* Dimensions & Timing */
+  --header-height: 76px;
+  --transition-fast: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+body {
+  font-family: 'Cairo', 'Readex Pro', -apple-system, sans-serif;
+  background-color: var(--bg-warm);
+  color: var(--text-dark);
+  direction: rtl;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  position: relative;
+}
+
+/* --------------------------------------------------------------------------
+   Background & Islamic Geometric Mandala Pattern
+   -------------------------------------------------------------------------- */
+.bg-pattern {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.05;
+  background-image: radial-gradient(var(--primary-gold-dark) 1px, transparent 0),
+    url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23997A15' fill-opacity='1'%3E%3Cpath d='M40 0l10 10-10 10-10-10L40 0zm0 80l10-10-10-10-10 10 10 10zM0 40l10 10-10 10-10-10L0 40zm80 0l10 10-10 10-10-10 10-10zM20 20l10 10-10 10-10-10 10-10zm40 0l10 10-10 10-10-10 10-10zm-40 40l10 10-10 10-10-10 10-10zm40 40l10 10-10 10-10-10 10-10z'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 80px 80px;
+}
+
+.app-container {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* --------------------------------------------------------------------------
+   1. TOP BAR / HEADER (Metallic Banner Frame)
+   -------------------------------------------------------------------------- */
+.top-header {
+  height: var(--header-height);
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(246,242,232,0.85) 100%);
+  border-bottom: 2px solid rgba(212, 175, 55, 0.4);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+  backdrop-filter: blur(10px);
+}
+
+.header-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.banner-frame {
+  background: linear-gradient(135deg, #B8860B 0%, #FFD700 30%, #FFA500 70%, #997A15 100%);
+  padding: 2px;
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(255, 107, 0, 0.25), inset 0 1px 1px rgba(255,255,255,0.6);
+}
+
+.banner-content {
+  background: linear-gradient(180deg, #2A241A 0%, #1A1610 100%);
+  padding: 8px 24px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.banner-title {
+  font-family: 'Cairo', sans-serif;
+  font-size: 22px;
+  font-weight: 900;
+  background: linear-gradient(180deg, #FFE885 0%, #FFD700 50%, #FFA500 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+
+.round-badge {
+  background: linear-gradient(135deg, var(--primary-orange) 0%, #D84315 100%);
+  color: white;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 13px;
+  box-shadow: 0 2px 8px rgba(255, 107, 0, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-metallic {
+  background: linear-gradient(180deg, #FFFFFF 0%, #F0E6D2 100%);
+  border: 1.5px solid var(--primary-gold);
+  color: var(--text-dark);
+  padding: 8px 18px;
+  border-radius: 12px;
+  font-family: 'Cairo', sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: var(--transition-fast);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+
+.btn-metallic:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(180deg, #FFFDF7 0%, #FFE6A3 100%);
+  border-color: var(--primary-orange);
+  box-shadow: 0 4px 12px rgba(255, 107, 0, 0.2);
+}
+
+.btn-metallic.primary {
+  background: linear-gradient(180deg, #FF9E42 0%, #FF6B00 100%);
+  border-color: #E65100;
+  color: white;
+}
+
+.btn-metallic.primary:hover {
+  background: linear-gradient(180deg, #FFAE5B 0%, #E65100 100%);
+  box-shadow: 0 4px 15px rgba(255, 107, 0, 0.4);
+}
+
+/* --------------------------------------------------------------------------
+   MAIN LAYOUT (Full Viewport Board Canvas + Floating HUDs)
+   -------------------------------------------------------------------------- */
+.main-viewport {
+  flex: 1;
+  position: relative;
+  display: flex;
+  overflow: hidden;
+}
+
+/* Floating Team Stats HUD (Left/Right Overlay Panels) */
+.hud-teams-panel {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 260px;
+  pointer-events: auto;
+}
+
+.team-card-hud {
+  background: var(--surface-glass);
+  backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9);
+  transition: var(--transition-smooth);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.team-card-hud::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 6px;
+  height: 100%;
+  background: var(--team-color, var(--primary-gold));
+  border-radius: 0 16px 16px 0;
+}
+
+.team-card-hud.active-turn {
+  border-color: var(--primary-orange);
+  background: rgba(255, 248, 235, 0.95);
+  box-shadow: 0 8px 28px rgba(255, 107, 0, 0.25), inset 0 0 0 1px var(--primary-gold);
+  transform: translateX(-6px) scale(1.02);
+}
+
+.team-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-right: 8px;
+}
+
+.team-name {
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--text-dark);
+}
+
+.team-stats {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.team-balance {
+  font-family: 'Readex Pro', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  color: #2E7D32;
+  background: rgba(46, 125, 50, 0.08);
+  padding: 2px 8px;
+  border-radius: 8px;
+}
+
+/* --------------------------------------------------------------------------
+   2. ISOMETRIC 2.5D BOARD CONTAINER & CANVAS
+   -------------------------------------------------------------------------- */
+.board-container {
+  flex: 1;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+#isoCanvas {
+  display: block;
+  cursor: grab;
+}
+
+#isoCanvas:active {
+  cursor: grabbing;
+}
+
+/* Floating Zoom Controls UI */
+.zoom-controls {
+  position: absolute;
+  bottom: 24px;
+  left: 24px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(25, 30, 40, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1.5px solid var(--primary-gold);
+  border-radius: 16px;
+  padding: 6px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+}
+
+.btn-zoom {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  color: #FFE885;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.btn-zoom:hover {
+  background: var(--primary-orange);
+  color: white;
+  border-color: #FFD700;
+  transform: scale(1.08);
+}
+
+/* Modal Overlay for Building Selection */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.modal-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-card {
+  background: linear-gradient(180deg, #FFFFFF 0%, #F9F6EE 100%);
+  border: 2px solid var(--primary-gold);
+  border-radius: 24px;
+  width: 440px;
+  padding: 24px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  transform: translateY(20px) scale(0.95);
+  transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.modal-overlay.show .modal-card {
+  transform: translateY(0) scale(1);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1.5px solid rgba(212, 175, 55, 0.3);
+  padding-bottom: 12px;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--primary-orange);
+}
+
+.modal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.building-select-btn {
+  background: white;
+  border: 1.5px solid var(--slate-border);
+  border-radius: 14px;
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.building-select-btn:hover {
+  border-color: var(--primary-gold);
+  background: #FFFDF7;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+}
+
+.building-select-btn.selected {
+  border-color: var(--primary-orange);
+  background: rgba(255, 107, 0, 0.06);
+}
+
+.building-icon {
+  font-size: 28px;
+}
+
+.building-label {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.building-price {
+  font-size: 11px;
+  color: #2E7D32;
+  font-family: 'Readex Pro', sans-serif;
+}
+
+/* --------------------------------------------------------------------------
+   3. TOOLTIP POPUP (Building Details)
+   -------------------------------------------------------------------------- */
+.building-tooltip {
+  position: absolute;
+  z-index: 100;
+  background: var(--surface-dark-glass);
+  backdrop-filter: blur(16px);
+  border: 1.5px solid var(--primary-gold);
+  border-radius: 18px;
+  padding: 16px;
+  width: 260px;
+  color: white;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+  pointer-events: auto;
+  opacity: 0;
+  transform: translateY(10px) scale(0.95);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  display: none;
+}
+
+.building-tooltip.show {
+  display: block;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.tooltip-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+.tooltip-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--primary-gold-light);
+}
+
+.tooltip-cell-num {
+  font-size: 12px;
+  background: rgba(255,255,255,0.15);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.tooltip-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modifier-tag {
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.modifier-tag.boost {
+  background: rgba(52, 199, 89, 0.2);
+  color: #5CD97D;
+}
+
+.modifier-tag.penalty {
+  background: rgba(255, 59, 48, 0.2);
+  color: #FF6B6B;
+}
+
+.modifier-tag.neutral {
+  background: rgba(255, 255, 255, 0.15);
+  color: #E0E0E0;
+}
+
+/* --------------------------------------------------------------------------
+   4. TEAM SETTINGS MODAL
+   -------------------------------------------------------------------------- */
+.team-settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.team-settings-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 12px;
+  padding: 8px 12px;
+}
+
+.team-color-picker {
+  width: 36px;
+  height: 36px;
+  border: 2px solid var(--primary-gold);
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 0;
+  background: none;
+  -webkit-appearance: none;
+}
+
+.team-color-picker::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.team-color-picker::-webkit-color-swatch {
+  border: none;
+  border-radius: 6px;
+}
+
+.team-name-input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1.5px solid rgba(212, 175, 55, 0.4);
+  border-radius: 8px;
+  font-family: 'Cairo', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  text-align: right;
+  background: white;
+  transition: border-color 0.2s;
+}
+
+.team-name-input:focus {
+  outline: none;
+  border-color: var(--primary-orange);
+}
+
+.team-balance-input,
+.team-score-input {
+  width: 80px;
+  padding: 6px 8px;
+  border: 1.5px solid rgba(212, 175, 55, 0.3);
+  border-radius: 8px;
+  font-family: 'Readex Pro', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  text-align: center;
+  background: white;
+}
+
+.team-balance-input:focus,
+.team-score-input:focus {
+  outline: none;
+  border-color: var(--primary-orange);
+}
+
+.btn-remove-team {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(255, 59, 48, 0.4);
+  background: rgba(255, 59, 48, 0.08);
+  color: var(--accent-red);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-fast);
+}
+
+.btn-remove-team:hover {
+  background: var(--accent-red);
+  color: white;
+  transform: scale(1.1);
+}
+
+/* Team Color Dot in HUD Cards */
+.team-color-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}

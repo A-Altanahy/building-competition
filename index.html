@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>الأشبال - الدوري الثقافي: تحدي البناء</title>
+  
+  <!-- Fonts & Styles -->
+  <link rel="stylesheet" href="css/isometric.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- Background Islamic Geometric Pattern Overlay -->
+  <div class="bg-pattern"></div>
+
+  <div class="app-container">
+
+    <!-- 1. TOP HEADER BANNER FRAME -->
+    <header class="top-header">
+      <div class="header-banner">
+        <div class="banner-frame">
+          <div class="banner-content">
+            <i class="fa-solid fa-city" style="color: #FFD700; font-size: 24px;"></i>
+            <h1 class="banner-title">الأشبال - تحدي البناء</h1>
+          </div>
+        </div>
+        <div class="round-badge" id="roundBadge">
+          <i class="fa-solid fa-flag-checkered"></i>
+          <span>الجولة 1</span>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <button class="btn-metallic" id="btnTeamSettings" title="إعدادات الفرق">
+          <i class="fa-solid fa-users-gear"></i>
+          <span>إعدادات الفرق</span>
+        </button>
+        <button class="btn-metallic primary" id="btnEndRound">
+          <i class="fa-solid fa-forward"></i>
+          <span>إنهاء الجولة</span>
+        </button>
+        <button class="btn-metallic" id="btnUndoRound">
+          <i class="fa-solid fa-rotate-left"></i>
+          <span>تراجع</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- 2. MAIN VIEWPORT (Full Screen Board Canvas + Floating HUD + Zoom Controls) -->
+    <main class="main-viewport">
+
+      <!-- Floating Team Stats HUD Panel -->
+      <div class="hud-teams-panel" id="hudTeamsPanel">
+        <!-- Dynamically rendered team cards -->
+      </div>
+
+      <!-- 2.5D Isometric Canvas Container -->
+      <div class="board-container" id="boardContainer">
+        <canvas id="isoCanvas"></canvas>
+
+        <!-- Interactive Floating Zoom Controls -->
+        <div class="zoom-controls">
+          <button class="btn-zoom" id="btnZoomIn" title="تكبير (+)">
+            <i class="fa-solid fa-plus"></i>
+          </button>
+          <button class="btn-zoom" id="btnZoomReset" title="إعادة المركز">
+            <i class="fa-solid fa-compress"></i>
+          </button>
+          <button class="btn-zoom" id="btnZoomOut" title="تصغير (-)">
+            <i class="fa-solid fa-minus"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Building Details Tooltip Popover -->
+      <div class="building-tooltip" id="buildingTooltip">
+        <div class="tooltip-header">
+          <span class="tooltip-title" id="tooltipTitle">بيت</span>
+          <span class="tooltip-cell-num" id="tooltipCellNum">#1</span>
+        </div>
+        <div class="tooltip-body">
+          <div class="tooltip-row">
+            <span>المالك:</span>
+            <strong id="tooltipOwner">علي بن أبي طالب</strong>
+          </div>
+          <div class="tooltip-row">
+            <span>العائد الأساسي:</span>
+            <span id="tooltipBaseValue">200 نقطة</span>
+          </div>
+          <div class="tooltip-row">
+            <span>العائد الحالي:</span>
+            <strong id="tooltipYield">200 نقطة</strong>
+          </div>
+          <div class="tooltip-row" style="margin-top: 4px;">
+            <span>التأثير:</span>
+            <span class="modifier-tag neutral" id="tooltipModifier">لا يوجد تأثير</span>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- Building Selection Modal -->
+  <div class="modal-overlay" id="buildingModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span class="modal-title" id="modalCellTitle">تخصيص المربع</span>
+        <button class="btn-metallic" id="btnCloseModal" style="padding: 4px 10px;">✕</button>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <label style="font-size: 13px; font-weight: 700;">اختر الفريق المالك:</label>
+        <select id="modalTeamSelect" style="padding: 8px; border-radius: 10px; border: 1px solid var(--primary-gold); font-family: Cairo; font-weight: 700;">
+          <!-- Dynamically populated -->
+        </select>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <label style="font-size: 13px; font-weight: 700;">اختر نوع المبنى:</label>
+        <div class="modal-grid">
+          <div class="building-select-btn selected" data-building="بيت">
+            <span class="building-icon">🏠</span>
+            <span class="building-label">بيت</span>
+            <span class="building-price">150 د.ك</span>
+          </div>
+
+          <div class="building-select-btn" data-building="بقالة">
+            <span class="building-icon">🛒</span>
+            <span class="building-label">بقالة</span>
+            <span class="building-price">200 د.ك</span>
+          </div>
+
+          <div class="building-select-btn" data-building="فندق">
+            <span class="building-icon">🏨</span>
+            <span class="building-label">فندق</span>
+            <span class="building-price">500 د.ك</span>
+          </div>
+
+          <div class="building-select-btn" data-building="سوق">
+            <span class="building-icon">🕌</span>
+            <span class="building-label">سوق</span>
+            <span class="building-price">800 د.ك</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-top: 10px;">
+        <button class="btn-metallic primary" id="btnConfirmBuild" style="flex: 1; justify-content: center;">
+          <i class="fa-solid fa-hammer"></i>
+          <span>بناء / تحديث</span>
+        </button>
+        <button class="btn-metallic" id="btnDemolish" style="color: var(--accent-red); border-color: var(--accent-red);">
+          <i class="fa-solid fa-trash"></i>
+          <span>هدم</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Team Settings Modal -->
+  <div class="modal-overlay" id="teamSettingsModal">
+    <div class="modal-card" style="width: 520px;">
+      <div class="modal-header">
+        <span class="modal-title">
+          <i class="fa-solid fa-users-gear" style="margin-left: 8px;"></i>
+          إعدادات الفرق
+        </span>
+        <button class="btn-metallic" id="btnCloseTeamSettings" style="padding: 4px 10px;">✕</button>
+      </div>
+
+      <div class="team-settings-list" id="teamSettingsContainer">
+        <!-- Dynamically populated team rows -->
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-top: 10px;">
+        <button class="btn-metallic" id="btnAddTeam" style="flex: 1; justify-content: center;">
+          <i class="fa-solid fa-plus"></i>
+          <span>إضافة فريق</span>
+        </button>
+        <button class="btn-metallic primary" id="btnSaveTeams" style="flex: 1; justify-content: center;">
+          <i class="fa-solid fa-check"></i>
+          <span>حفظ التغييرات</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/game_state.js?v=20260722_default_teams"></script>
+  <script src="js/isometric_renderer.js?v=20260722_default_teams"></script>
+  <script src="js/app.js?v=20260722_default_teams"></script>
+
+</body>
+</html>
